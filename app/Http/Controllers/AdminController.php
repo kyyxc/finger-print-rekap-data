@@ -95,7 +95,7 @@ class AdminController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $userId = User::pluck('id')->toArray();
+        $userId = User::pluck('nis')->toArray();
 
         $zipFile = $request->file('zip_file');
         $zip = new ZipArchive;
@@ -106,10 +106,11 @@ class AdminController extends Controller
                 $filename = $zip->getNameIndex($i);
                 $fileInfo = pathinfo($filename);
 
-                if (!in_array($filename, $userId)) {
+                // dd(['fileInfo' => $fileInfo, 'in_array' => in_array($filename, $userId), 'filename' => explode('.', $filename), 'userId' => $userId]);
+                if (!in_array(explode('.', $filename)[0], $userId)) {
                     continue;
                 }
-
+                
                 $ext = strtolower($fileInfo['extension'] ?? '');
                 if (!in_array($ext, ['jpg', 'jpeg', 'png']))
                     continue;
