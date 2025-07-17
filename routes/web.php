@@ -19,7 +19,7 @@ Route::prefix('admins')->group(function () {
         Route::post('sync-users', [AdminController::class, 'syncUsers'])->name('admins.users.sync');
         Route::get('users', [AdminController::class, 'users'])->name('admins.users');
         Route::delete('users/{id}', [AdminController::class, 'destroy'])->name('admins.users.destroy');
-        Route::delete('all-users', [AdminController::class, 'deleteAllUsers'])->name('admins.users.destroy.all');
+        // Route::delete('all-users', [AdminController::class, 'deleteAllUsers'])->name('admins.users.destroy.all');
         Route::post('import-users', [AdminController::class, 'importUsers'])->name('admins.users.import');
         Route::post('import-photos', [AdminController::class, 'importPhotos'])->name('admins.users.import.photos');
         Route::get('export-attendances', [AdminController::class, 'exportAttendances'])->name('admins.attendances.export');

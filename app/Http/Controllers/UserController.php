@@ -25,34 +25,38 @@ class UserController extends Controller
             Log::error('Gagal sinkronisasi absensi: ' . $e->getMessage());
         }
 
-        // 3. Logika untuk query dan menampilkan data (tetap sama, sudah bagus).
-        $tanggal = $request->input('tanggal', now()->toDateString());
-        $status = $request->input('status');
-        $search = $request->input('search');
-        $completeness = $request->input('completeness', 'complete');
+        $dateType = $request->input('date_type', 'single');
+        $statuses = $request->input('status', []); // Default ke array kosong
 
         $query = Attendance::query()
             ->with('user')
-            ->whereHas('user', fn($q) => $q->whereNull('deleted_at'))
-            ->whereDate('record_time', $tanggal)
-            ->when($status, fn($q) => $q->where('status', $status))
-            ->when($search, function ($q) use ($search) {
-                $q->whereHas('user', function ($q) use ($search) {
-                    $q->where('nama', 'like', "%$search%")
-                        ->orWhere('nis', 'like', "%$search%");
-                });
-            })
-            ->when($completeness, function ($q) use ($completeness) {
-                if ($completeness === 'complete') {
-                    $q->whereHas('user', fn($sq) => $sq->whereNotNull('nama')->whereNotNull('kelas'));
-                } elseif ($completeness === 'incomplete') {
-                    $q->whereHas('user', fn($sq) => $sq->whereNull('nama')->orWhereNull('kelas'));
-                }
-            })
-            ->orderBy('record_time', 'asc')
-            ->get();
+            ->whereHas('user', fn($q) => $q->whereNull('deleted_at'));
 
-        return view('pages.dashboard', compact('query', 'tanggal', 'status', 'search', 'completeness'));
+        if ($dateType === 'range') {
+            $startDate = $request->input('tanggal_mulai');
+            $endDate = $request->input('tanggal_akhir');
+
+            if ($startDate && $endDate) {
+                $realStartDate = min($startDate, $endDate);
+                $realEndDate = max($startDate, $endDate);
+
+                $query->whereBetween('record_time', [
+                    Carbon::parse($realStartDate)->startOfDay(),
+                    Carbon::parse($realEndDate)->endOfDay()
+                ]);
+            }
+        } else {
+            $singleDate = $request->input('tanggal_tunggal', now()->toDateString());
+            $query->whereDate('record_time', $singleDate);
+        }
+
+        if (!empty($statuses)) {
+            $query->whereIn('status', $statuses);
+        }
+
+        $results = $query->orderBy('record_time', 'desc')->get();
+
+        return view('pages.dashboard', ['query' => $results]);
     }
 
     private function syncAttendancesFromMachine()

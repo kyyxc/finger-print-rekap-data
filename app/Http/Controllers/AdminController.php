@@ -69,28 +69,28 @@ class AdminController extends Controller
         return redirect()->route('admins.users')->with('message', 'User berhasil dihapus (soft delete).');
     }
 
-    public function deleteAllUsers() {
-        $zk = new ZKTeco(config('services.zkteco.ip'));
+    // public function deleteAllUsers() {
+    //     $zk = new ZKTeco(config('services.zkteco.ip'));
 
-        if (!$zk->connect()) {
-            Log::error('Gagal terhubung ke mesin absensi saat menghapus semua user.');
-        }
+    //     if (!$zk->connect()) {
+    //         Log::error('Gagal terhubung ke mesin absensi saat menghapus semua user.');
+    //     }
 
-        // dd($zk->clearAllUsers());
+    //     // dd($zk->clearAllUsers());
 
-        // if (!$zk->clearAllUsers()) {
-        //     Log::error('Gagal menghapus semua user dari mesin absensi.');
-        //     return redirect()->route('admins.dashboard')->withErrors(['error' => 'Gagal menghapus semua user dari mesin fingerprint']);
-        // }
+    //     // if (!$zk->clearAllUsers()) {
+    //     //     Log::error('Gagal menghapus semua user dari mesin absensi.');
+    //     //     return redirect()->route('admins.dashboard')->withErrors(['error' => 'Gagal menghapus semua user dari mesin fingerprint']);
+    //     // }
 
-        if ($zk->deleteUsers(fn($user) => true)) {
-            Log::error('Gagal menghapus semua user dari mesin absensi.');
-            return redirect()->route('admins.dashboard')->withErrors(['error' => 'Gagal menghapus semua user dari mesin fingerprint']);
-        }
+    //     if ($zk->deleteUsers(fn($user) => true)) {
+    //         Log::error('Gagal menghapus semua user dari mesin absensi.');
+    //         return redirect()->route('admins.dashboard')->withErrors(['error' => 'Gagal menghapus semua user dari mesin fingerprint']);
+    //     }
 
-        $zk->disconnect();
-        return redirect()->route('admins.users')->with('message', 'Semua user berhasil dihapus dari mesin fingerprint dan database.');
-    }
+    //     $zk->disconnect();
+    //     return redirect()->route('admins.users')->with('message', 'Semua user berhasil dihapus dari mesin fingerprint dan database.');
+    // }
 
     public function importUsers(Request $request)
     {
