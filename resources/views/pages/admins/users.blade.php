@@ -8,8 +8,12 @@
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold mb-4">Data Siswa</h1>
                 <div class="flex gap-4">
-                    <a href="{{ route('admins.dashboard') }}"
-                        class="bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 w-fit">Delete All Users</a>
+                    <form action="{{ route('admins.users.destroy.all') }}" method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button class="bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 w-fit">Delete All
+                            Users</button>
+                    </form>
                     <a href="{{ route('admins.dashboard') }}"
                         class="bg-yellow-500 text-white px-4 py-2 rounded-xl hover:bg-yellow-600 w-fit">Back</a>
                 </div>
