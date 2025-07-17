@@ -69,6 +69,22 @@ class AdminController extends Controller
         return redirect()->route('admins.users')->with('message', 'User berhasil dihapus (soft delete).');
     }
 
+    public function deleteAllUsers() {
+        $zk = new ZKTeco(config('services.zkteco.ip'));
+
+        if (!$zk->connect()) {
+            Log::error('Gagal terhubung ke mesin absensi saat menghapus semua user.');
+        }
+
+        if (!$zk->clearAllUsers()) {
+            Log::error('Gagal menghapus semua user dari mesin absensi.');
+            return redirect()->route('admins.dashboard')->withErrors(['error' => 'Gagal menghapus semua user dari mesin fingerprint']);
+        }
+
+        User::truncate(); // Hapus semua user dari database
+        return redirect()->route('admins.users')->with('message', 'Semua user berhasil dihapus dari mesin fingerprint dan database.');
+    }
+
     public function importUsers(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -110,7 +126,7 @@ class AdminController extends Controller
                 if (!in_array(explode('.', $filename)[0], $userId)) {
                     continue;
                 }
-                
+
                 $ext = strtolower($fileInfo['extension'] ?? '');
                 if (!in_array($ext, ['jpg', 'jpeg', 'png']))
                     continue;

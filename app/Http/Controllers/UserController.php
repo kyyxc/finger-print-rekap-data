@@ -29,10 +29,11 @@ class UserController extends Controller
         $tanggal = $request->input('tanggal', now()->toDateString());
         $status = $request->input('status');
         $search = $request->input('search');
-        $showIncomplete = $request->boolean('show_incomplete');
+        $completeness = $request->input('completeness', 'complete');
 
-        $query = Attendance::whereHas('user', fn($q) => $q->whereNull('deleted_at'))
+        $query = Attendance::query()
             ->with('user')
+            ->whereHas('user', fn($q) => $q->whereNull('deleted_at'))
             ->whereDate('record_time', $tanggal)
             ->when($status, fn($q) => $q->where('status', $status))
             ->when($search, function ($q) use ($search) {
@@ -41,17 +42,17 @@ class UserController extends Controller
                         ->orWhere('nis', 'like', "%$search%");
                 });
             })
-            ->when(
-                !$showIncomplete,
-                fn($q) => $q->whereHas(
-                    'user',
-                    fn($q) => $q->whereNotNull('nama')->whereNotNull('kelas')
-                )
-            )
+            ->when($completeness, function ($q) use ($completeness) {
+                if ($completeness === 'complete') {
+                    $q->whereHas('user', fn($sq) => $sq->whereNotNull('nama')->whereNotNull('kelas'));
+                } elseif ($completeness === 'incomplete') {
+                    $q->whereHas('user', fn($sq) => $sq->whereNull('nama')->orWhereNull('kelas'));
+                }
+            })
             ->orderBy('record_time', 'asc')
             ->get();
 
-        return view('pages.dashboard', compact('query', 'tanggal', 'status', 'search', 'showIncomplete'));
+        return view('pages.dashboard', compact('query', 'tanggal', 'status', 'search', 'completeness'));
     }
 
     private function syncAttendancesFromMachine()
@@ -62,6 +63,7 @@ class UserController extends Controller
             throw new \Exception('Gagal terhubung ke mesin absensi. (SyndAttendanceFromMachine)');
         }
 
+        // dd($zk->getAttendances());
         // dd($zk->getUsers());
         $attendancesFromMachine = collect($zk->getAttendances());
         if ($attendancesFromMachine->isEmpty()) {
@@ -130,6 +132,7 @@ class UserController extends Controller
         if (!empty($attendancesToInsert)) {
             Attendance::insert($attendancesToInsert);
         }
+        // dd(Attendance::all());
 
         // Opsional tapi sangat disarankan: Hapus data setelah diambil
         $zk->clearAttendance();
