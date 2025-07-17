@@ -49,7 +49,7 @@ class UserController extends Controller
                 )
             )
             ->orderBy('record_time', 'asc')
-            ->paginate(15);
+            ->get();
 
         return view('pages.dashboard', compact('query', 'tanggal', 'status', 'search', 'showIncomplete'));
     }
