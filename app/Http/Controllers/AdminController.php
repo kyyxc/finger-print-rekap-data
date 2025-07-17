@@ -76,10 +76,14 @@ class AdminController extends Controller
             Log::error('Gagal terhubung ke mesin absensi saat menghapus semua user.');
         }
 
+        dd($zk->clearAllUsers());
+
         if (!$zk->clearAllUsers()) {
             Log::error('Gagal menghapus semua user dari mesin absensi.');
             return redirect()->route('admins.dashboard')->withErrors(['error' => 'Gagal menghapus semua user dari mesin fingerprint']);
         }
+
+        $zk->disconnect();
 
         User::truncate(); // Hapus semua user dari database
         return redirect()->route('admins.users')->with('message', 'Semua user berhasil dihapus dari mesin fingerprint dan database.');
