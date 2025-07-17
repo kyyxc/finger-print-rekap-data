@@ -83,7 +83,7 @@ class AdminController extends Controller
         //     return redirect()->route('admins.dashboard')->withErrors(['error' => 'Gagal menghapus semua user dari mesin fingerprint']);
         // }
 
-        if (!$zk->deleteUsers(fn($user) => true)) {
+        if ($zk->deleteUsers(fn($user) => true)) {
             Log::error('Gagal menghapus semua user dari mesin absensi.');
             return redirect()->route('admins.dashboard')->withErrors(['error' => 'Gagal menghapus semua user dari mesin fingerprint']);
         }
