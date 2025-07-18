@@ -62,10 +62,10 @@
 
 @section('content')
     <div class="bg-gray-50 text-gray-800">
-        <header class="bg-red-500 shadow-md flex px-56 py-4 items-center gap-4">
-            <img src="{{ asset('static/img/smkn2.png') }}" alt="Logo SMKN2" class="h-24">
+        <header class="bg-red-500 shadow-md flex px-4 md:px-56 py-4 items-center gap-4">
+            <img src="{{ asset('static/img/smkn2.png') }}" alt="Logo SMKN2" class="h-12 md:h-24">
             <div class="container">
-                <h1 class="text-3xl font-bold text-slate-100">Portal Presensi Siswa RPL</h1>
+                <h1 class="text-xl md:text-3xl font-bold text-slate-100">Portal Presensi Siswa RPL</h1>
                 <p class="text-slate-100">Pantau kehadiran secara transparan dan real-time.</p>
             </div>
         </header>
@@ -225,13 +225,13 @@
             </div>
         </div>
 
-        <footer class="bg-red-500 text-slate-100 mt-12 py-12 border-t">
-            <div class="container mx-auto text-center flex flex-col items-center gap-4">
+        <footer class="bg-red-500 text-slate-100 mt-12 py-8 md:py-12 border-t">
+            <div class="container mx-auto text-center flex flex-col items-center gap-0 md:gap-4">
                 <div class="flex justify-center items-center gap-4">
-                    <img src="{{ asset('static/img/smkn2.png') }}" alt="Logo Instansi" class="h-12">
+                    <img src="{{ asset('static/img/smkn2.png') }}" alt="Logo Instansi" class="h-8 md:h-12">
                     <p class="text-xl font-bold ">SMKN 2 Sukabumi</p>
                 </div>
-                <p class="mt-4">&copy; {{ date('Y') }} Portal Presensi Siswa. All rights reserved.</p>
+                <p class="max-w-[300px] md:max-w-none">&copy; {{ date('Y') }} Portal Presensi Siswa. All rights reserved.</p>
             </div>
         </footer>
     </div>
