@@ -22,8 +22,8 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         Admin::create([
-            'username' => env('ADMIN_USERNAME'),
-            'password' => bcrypt(env('ADMIN_PASSWORD')),
+            'username' => config('app.admin_username'),
+            'password' => bcrypt(config('app.admin_password')),
         ]);
     }
 }
