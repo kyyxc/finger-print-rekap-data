@@ -62,8 +62,9 @@
 
 @section('content')
     <div class="bg-gray-50 text-gray-800">
-        <header class="bg-red-500 shadow-md">
-            <div class="container mx-auto px-6 py-4">
+        <header class="bg-red-500 shadow-md flex px-56 py-4 items-center gap-4">
+            <img src="{{ asset('static/img/smkn2.png') }}" alt="Logo SMKN2" class="h-24">
+            <div class="container">
                 <h1 class="text-3xl font-bold text-slate-100">Portal Presensi Siswa RPL</h1>
                 <p class="text-slate-100">Pantau kehadiran secara transparan dan real-time.</p>
             </div>
@@ -76,6 +77,8 @@
                         <div class="swiper-slide"><img src="{{ asset('static/img/1.jpg') }}" alt="Slide 1"></div>
                         <div class="swiper-slide"><img src="{{ asset('static/img/2.jpg') }}" alt="Slide 2"></div>
                         <div class="swiper-slide"><img src="{{ asset('static/img/3.jpg') }}" alt="Slide 3"></div>
+                        <div class="swiper-slide"><img src="{{ asset('static/img/4.jpeg') }}" alt="Slide 4"></div>
+                        <div class="swiper-slide"><img src="{{ asset('static/img/5.jpeg') }}" alt="Slide 5"></div>
                     </div>
                     <div class="swiper-pagination"></div>
                 </div>
@@ -92,13 +95,25 @@
                         <h2 class="text-2xl font-bold text-gray-800">Data Kehadiran Siswa</h2>
                         <p class="text-gray-500 mt-1">Data terbaru dari sistem presensi.</p>
                     </div>
-                    <button id="openFilterModal"
-                        class="bg-red-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-red-700 transition flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
-                        </svg>
-                        Filter Data
-                    </button>
+                    <div class="flex gap-4">
+                        <button id="openFilterModal"
+                            class="bg-red-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-red-700 transition flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+                            </svg>
+                            Filter Data
+                        </button>
+                        @auth('admin')
+                            <a href="{{ route('admins.dashboard') }}" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2"">Back to Dashboard</a>
+                            <a href="{{ route('admins.attendances.export') }}?{{ request()->getQueryString() }}"
+                                class="bg-green-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Ekspor Data
+                            </a>
+                        @endauth
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">

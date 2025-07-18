@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Attendance;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -28,23 +29,36 @@ class AttendancesExport implements FromQuery, WithHeadings, WithMapping
 
     public function query()
     {
-        $search = $this->request->input('search');
-        $tanggal = $this->request->input('tanggal', now()->toDateString());
-        $status = $this->request->input('status');
+        $dateType = $this->request->input('date_type', 'single');
+        $statuses = $this->request->input('status', []); // Default ke array kosong
 
-        return Attendance::query()
-            // ✅ <-- TAMBAHKAN BARIS INI
-            ->whereHas('user', fn($q) => $q->whereNull('deleted_at'))
+        $query = Attendance::query()
             ->with('user')
-            ->whereDate('record_time', $tanggal)
-            ->when($status, fn($q) => $q->where('status', $status))
-            ->when($search, function ($q) use ($search) {
-                $q->whereHas('user', function ($q) use ($search) {
-                    $q->where('nama', 'like', "%$search%")
-                        ->orWhere('nis', 'like', "%$search%");
-                });
-            })
-            ->orderBy('record_time', 'asc');
+            ->whereHas('user', fn($q) => $q->whereNull('deleted_at'));
+
+        if ($dateType === 'range') {
+            $startDate = $this->request->input('tanggal_mulai');
+            $endDate = $this->request->input('tanggal_akhir');
+
+            if ($startDate && $endDate) {
+                $realStartDate = min($startDate, $endDate);
+                $realEndDate = max($startDate, $endDate);
+
+                $query->whereBetween('record_time', [
+                    Carbon::parse($realStartDate)->startOfDay(),
+                    Carbon::parse($realEndDate)->endOfDay()
+                ]);
+            }
+        } else {
+            $singleDate = $this->request->input('tanggal_tunggal', now()->toDateString());
+            $query->whereDate('record_time', $singleDate);
+        }
+
+        if (!empty($statuses)) {
+            $query->whereIn('status', $statuses);
+        }
+
+        return $query->orderBy('record_time', 'desc');
     }
 
     /**
