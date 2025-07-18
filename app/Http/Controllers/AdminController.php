@@ -28,25 +28,21 @@ class AdminController extends Controller
         return view('pages.admins.dashboard');
     }
 
-    public function users(Request $request)
-    {
-        try {
-            $this->createUser();
-        } catch (\Exception $e) {
-            Log::error('Gagal sinkronisasi user: ' . $e->getMessage());
-        }
-        $search = $request->input('search');
-        $users = User::query()
-            ->when($search, function ($query) use ($search) {
-                $query->where('nis', 'like', "%$search%")
-                    ->orWhere('nama', 'like', "%$search%")
-                    ->orWhere('kelas', 'like', "%$search%");
-            })
-            ->orderBy('nama')
-            ->paginate(15);
-
-        return view('pages.admins.users', compact('users'));
+public function users(Request $request)
+{
+    try {
+        $this->createUser();
+    } catch (\Exception $e) {
+        Log::error('Gagal sinkronisasi user: ' . $e->getMessage());
     }
+
+    $users = User::query()
+        ->orderBy('nama', 'asc')
+        ->get();
+
+    return view('pages.admins.users', compact('users'));
+}
+
 
     public function destroy($id)
     {
