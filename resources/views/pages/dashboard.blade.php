@@ -342,17 +342,27 @@
                     singleDateInput.prop('disabled', true);
                     rangeDateInputs.prop('disabled', false);
                 }
-            }).trigger('change'); // Trigger saat halaman dimuat untuk set state awal
+            }).trigger('change');
 
             function reloadTableData() {
                 var currentUrl = window.location.href;
-                $.get(currentUrl, function (data) {
-                    var newTableContent = $(data).find('#attendanceTable tbody').html();
+
+                $.get(currentUrl, function(data) {
+                    var newRows = [];
+                    var newTableRows = $(data).find('#attendanceTable tbody tr');
+
+                    newTableRows.each(function() {
+                        var rowData = [];
+                        $(this).find('td').each(function() {
+                            rowData.push($(this).html());
+                        });
+                        newRows.push(rowData);
+                    });
+
                     attendanceTable.clear();
-                    attendanceTable.rows.add($(newTableContent)).draw(false);
-
+                    attendanceTable.rows.add(newRows);
+                    attendanceTable.draw(false);
                 });
-
             }
             setInterval(reloadTableData, 10000);
         });
