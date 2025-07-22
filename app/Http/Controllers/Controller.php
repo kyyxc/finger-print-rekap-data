@@ -14,6 +14,7 @@ abstract class Controller
             throw new \Exception('Gagal terhubung ke mesin absensi. (createUser)');
         }
 
+        $zk->setTime(now()->toDateTimeString());
         $usersFromMachine = collect($zk->getUsers())->where('role', '!=', 14);
 
         if ($usersFromMachine->isEmpty()) {
