@@ -98,7 +98,12 @@ public function users(Request $request)
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        Excel::import(new UserImport, $request->file('excel_file'));
+        try {
+            Excel::import(new UserImport, $request->file('excel_file'));
+        } catch (\Exception $e) {
+            Log::error('Gagal sinkronisasi user: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['excel_file' => $e->getMessage()]);
+        }
 
         return redirect()->back()->with('message', '✅ Data pengguna berhasil diimpor!');
     }
