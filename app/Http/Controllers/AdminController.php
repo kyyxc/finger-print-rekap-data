@@ -46,7 +46,7 @@ public function users(Request $request)
 
     public function destroy($id)
     {
-        $zk = new ZKTeco('10.10.10.201');
+        $zk = new ZKTeco(config('services.zkteco.ip'));
         if (!$zk->connect()) {
             throw new \Exception('Gagal terhubung ke mesin absensi. (destroyUser)');
         }
