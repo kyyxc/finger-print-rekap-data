@@ -109,9 +109,6 @@
                                     <td class="py-4 px-6 text-sm text-gray-700 row-number">{{ $admins->firstItem() + $index }}</td>
                                     <td class="py-4 px-6">
                                         <div class="flex items-center gap-3">
-                                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                                <span class="text-blue-600 font-semibold">{{ strtoupper(substr($admin->username, 0, 1)) }}</span>
-                                            </div>
                                             <span class="text-sm font-medium text-gray-800">{{ $admin->username }}</span>
                                         </div>
                                     </td>

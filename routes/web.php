@@ -5,7 +5,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SekretarisController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppBotController;
-use CodingLibs\ZktecoPhp\Libs\ZKTeco;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [UserController::class, 'dashboard'])->name('dashboard');
@@ -31,6 +30,7 @@ Route::prefix('admin')->group(function () {
 
         Route::post('sync-users', [AdminController::class, 'syncUsers'])->name('admin.users.sync');
         Route::get('users', [AdminController::class, 'users'])->name('admin.users');
+        Route::patch('users/{id}', [AdminController::class, 'updateUser'])->name('admin.users.update');
         Route::delete('users/{id}', [AdminController::class, 'destroy'])->name('admin.users.destroy');
         Route::post('import-users', [AdminController::class, 'importUsers'])->name('admin.users.import');
         Route::post('import-photos', [AdminController::class, 'importPhotos'])->name('admin.users.import.photos');
@@ -41,7 +41,14 @@ Route::prefix('admin')->group(function () {
         Route::delete('admins/{id}', [AdminController::class, 'deleteAdmin'])->name('admin.admins.destroy');
 
         Route::get('sekretaris', [AdminController::class, 'sekretaris'])->name('admin.sekretaris');
+        Route::post('sekretaris', [AdminController::class, 'createSekretaris'])->name('admin.sekretaris.store');
+        Route::patch('sekretaris/{id}', [AdminController::class, 'updateSekretaris'])->name('admin.sekretaris.update');
+        Route::delete('sekretaris/{id}', [AdminController::class, 'deleteSekretaris'])->name('admin.sekretaris.destroy');
+
         Route::get('grades', [AdminController::class, 'grades'])->name('admin.grades');
+        Route::post('grades', [AdminController::class, 'createGrade'])->name('admin.grades.store');
+        Route::patch('grades/{id}', [AdminController::class, 'updateGrade'])->name('admin.grades.update');
+        Route::delete('grades/{id}', [AdminController::class, 'deleteGrade'])->name('admin.grades.destroy');
     });
 });
 
