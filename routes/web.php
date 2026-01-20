@@ -4,10 +4,15 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SekretarisController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WhatsAppBotController;
 use CodingLibs\ZktecoPhp\Libs\ZKTeco;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [UserController::class, 'dashboard'])->name('dashboard');
+Route::get('/wa-test', [WhatsAppBotController::class, 'testPage'])->name('wa-test');
+
+// WhatsApp Bot Routes
+Route::post('/whatsapp-bot/send-test', [WhatsAppBotController::class, 'sendTestMessage']);
 
 Route::get('login', [AuthController::class, 'login'])->name('login');
 Route::post('login', [AuthController::class, 'postLogin'])->name('authenticate');
