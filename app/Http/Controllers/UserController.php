@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use CodingLibs\ZktecoPhp\Libs\ZKTeco;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserController extends Controller
 {
@@ -32,9 +33,18 @@ class UserController extends Controller
         // Request input
         // ==============================
         $dateType = $request->input('date_type', 'single');
-        $statuses = $request->has('status')
-            ? $request->input('status', [])
-            : ['masuk'];
+
+        // STATUS selalu array (fix utama)
+        $statuses = $request->input('status', []);
+
+        if (!is_array($statuses)) {
+            $statuses = [$statuses];
+        }
+
+        // Default jika kosong dan tidak ada parameter status sama sekali
+        if (!$request->has('status')) {
+            $statuses = ['masuk'];
+        }
 
         // ==============================
         // Base query attendance
@@ -47,10 +57,12 @@ class UserController extends Controller
         // Date filter
         // ==============================
         if ($dateType === 'range') {
+
             $startDate = $request->input('tanggal_mulai');
             $endDate   = $request->input('tanggal_akhir');
 
             if ($startDate && $endDate) {
+
                 $realStartDate = min($startDate, $endDate);
                 $realEndDate   = max($startDate, $endDate);
 
@@ -60,6 +72,7 @@ class UserController extends Controller
                 ]);
             }
         } else {
+
             $singleDate = $request->input('tanggal_tunggal', now()->toDateString());
             $query->whereDate('record_time', $singleDate);
         }
@@ -69,15 +82,17 @@ class UserController extends Controller
         // ==============================
         if (!empty($statuses)) {
             $query->where(function ($q) use ($statuses) {
+
                 if (in_array('tidak_hadir', $statuses)) {
+
                     $q->whereNull('status')
                         ->orWhereIn('status', array_diff($statuses, ['tidak_hadir']));
                 } else {
+
                     $q->whereIn('status', $statuses);
                 }
             });
         }
-
 
         // ==============================
         // Get attendance results
@@ -90,42 +105,63 @@ class UserController extends Controller
         // Tambahkan USER YANG BELUM HADIR (SINGLE DATE ONLY)
         // ===================================================
         if ($dateType === 'single') {
+
             $singleDate = $request->input('tanggal_tunggal', now()->toDateString());
 
-            // Semua user aktif
             $allUsers = User::whereNull('deleted_at')->get();
-
-            // User yang sudah punya attendance
             $presentUserIds = $results->pluck('user_id')->unique();
 
-            // User yang tidak hadir
             $absentAttendances = $allUsers
                 ->whereNotIn('id', $presentUserIds)
                 ->map(function ($user) {
+
                     $attendance = new Attendance();
                     $attendance->user_id = $user->id;
-                    $attendance->user = $user; // penting untuk blade
-                    $attendance->status = null; // TIDAK HADIR
+                    $attendance->user = $user;
+                    $attendance->status = null;
                     $attendance->record_time = null;
 
                     return $attendance;
                 });
 
-            // Gabungkan & rapikan
-            // Tambahkan tidak hadir HANYA jika dipilih di filter
             if (in_array('tidak_hadir', $statuses)) {
+
                 $results = $results
                     ->concat($absentAttendances)
-                    ->sortByDesc(fn($item) => $item->record_time ?? '0000-00-00')
+                    ->sortByDesc(
+                        fn($item) =>
+                        $item->record_time
+                            ? $item->record_time->timestamp
+                            : 0
+                    )
                     ->values();
             }
         }
 
         // ==============================
+        // Pagination
+        // ==============================
+        $perPage = (int) $request->input('per_page', 10);
+        $page = (int) $request->input('page', 1);
+        $total = $results->count();
+
+        $paginatedResults = new LengthAwarePaginator(
+            $results->forPage($page, $perPage)->values(),
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
+
+        // ==============================
         // Return view
         // ==============================
         return view('pages.dashboard', [
-            'query' => $results,
+            'query' => $paginatedResults,
+            'perPage' => $perPage,
         ]);
     }
 
