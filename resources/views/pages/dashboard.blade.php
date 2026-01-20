@@ -338,8 +338,8 @@
         </main>
 
         <div id="filterModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 modal-overlay opacity-0 pointer-events-none transition-opacity duration-200">
-            <div class="bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-2xl p-4 sm:p-8 m-3 sm:m-4 transform scale-95 modal-content transition-transform duration-200 max-h-[90vh] overflow-y-auto">
+            class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500/30 backdrop-blur-sm modal-overlay opacity-0 pointer-events-none transition-opacity duration-200">
+            <div class="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-2xl p-4 sm:p-8 m-3 sm:m-4 transform scale-95 modal-content transition-transform duration-200 max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-4 sm:mb-6">
                     <h3 class="text-lg sm:text-2xl font-bold text-gray-800">Filter Data</h3>
                     <button id="closeFilterModal" class="text-gray-500 hover:text-gray-800 p-1">

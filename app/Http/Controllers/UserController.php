@@ -43,7 +43,7 @@ class UserController extends Controller
 
         // Default jika kosong dan tidak ada parameter status sama sekali
         if (!$request->has('status')) {
-            $statuses = ['masuk'];
+            $statuses = ['masuk', 'telat', 'pulang'];
         }
 
         // ==============================
