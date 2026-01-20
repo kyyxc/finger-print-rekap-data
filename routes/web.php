@@ -20,10 +20,14 @@ Route::post('logout', [AuthController::class, 'logout'])->name('logout')->middle
 
 Route::prefix('admin')->group(function () {
     Route::middleware(['auth.admin'])->group(function () {
-        Route::post('/', [AdminController::class, 'createAdmin'])->name('admin.create');
-        Route::delete('/', [AdminController::class, 'deleteAccount'])->name('admin.delete');
+        Route::post('/', action: [AdminController::class, 'createAdmin'])->name('admin.create');
 
         Route::get('dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+
+        Route::get('profile', [AdminController::class, 'profile'])->name('admin.profile');
+        Route::patch('profile', [AdminController::class, 'patchProfile'])->name('admin.change-password');
+        Route::delete('profile', [AdminController::class, 'deleteProfile'])->name('admin.delete');
+
 
         Route::post('sync-users', [AdminController::class, 'syncUsers'])->name('admin.users.sync');
         Route::get('users', [AdminController::class, 'users'])->name('admin.users');
@@ -31,7 +35,6 @@ Route::prefix('admin')->group(function () {
         Route::post('import-users', [AdminController::class, 'importUsers'])->name('admin.users.import');
         Route::post('import-photos', [AdminController::class, 'importPhotos'])->name('admin.users.import.photos');
         Route::get('export-attendances', [AdminController::class, 'exportAttendances'])->name('admin.attendances.export');
-        Route::post('change-password', [AdminController::class, 'changePassword'])->name('admin.change-password');
 
         // Kelola Admin, Sekretaris, Kelas
         Route::get('admins', [AdminController::class, 'admins'])->name('admin.admins');

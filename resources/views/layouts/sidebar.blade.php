@@ -60,7 +60,7 @@
                     <span class="font-medium">Users</span>
                 </a>
 
-                <a href="#"
+                <a href="{{ route('admin.profile') }}"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('admin.profile') ? 'bg-blue-600 text-white' : 'hover:bg-slate-700 text-slate-300' }}">
                     <span class="material-icons text-xl">account_circle</span>
                     <span class="font-medium">Profile</span>

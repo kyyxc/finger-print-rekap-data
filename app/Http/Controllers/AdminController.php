@@ -28,6 +28,67 @@ class AdminController extends Controller
         return view('pages.admins.dashboard1');
     }
 
+    public function profile()
+    {
+        return view('pages.admins.profile');
+    }
+
+    /**
+     * Mengubah password akun admin yang sedang login.
+     */
+    public function patchProfile(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('admin.profile')->withErrors($validator)->withInput();
+        }
+
+        $admin = auth()->guard('role')->user();
+        if (!Hash::check($request->current_password, $admin->password)) {
+            return redirect()->route('admin.profile')->withErrors(['current_password' => 'Password saat ini salah.']);
+        }
+
+        if ($request->current_password == $request->new_password) {
+            return redirect()->route('admin.profile')->withErrors(['new_password' => 'Password baru harus berbeda.']);
+        }
+
+        $admin->password = Hash::make($request->new_password);
+        $admin->save();
+
+        return back()->with('message', 'Password berhasil diubah.');
+    }
+
+    /**
+     * Menghapus akun admin yang sedang login.
+     */
+    public function deleteProfile(Request $request)
+    {
+        $validator = Validator::make($request->all(), ['password' => 'required|string']);
+        if ($validator->fails()) {
+            return redirect()->route('admin.profile')->withErrors($validator)->withInput();
+        }
+
+        $admin = auth()->guard('role')->user();
+        if (!Hash::check($request->password, $admin->password)) {
+            return redirect()->route('admin.profile')->withErrors(['password' => 'Password yang Anda masukkan salah.']);
+        }
+
+        $allAdmins = Role::count();
+        if ($allAdmins <= 1) {
+            return redirect()->route('admin.profile')->withErrors(['deleteAccount' => 'Anda tidak dapat menghapus akun ini karena hanya ada satu admin yang tersisa.']);
+        }
+
+        $admin->delete();
+        auth()->guard('role')->logout();
+
+        return redirect()->route('login')->with('message', 'Akun Anda telah berhasil dihapus.');
+    }
+
+
     public function users(Request $request)
     {
         try {
@@ -158,7 +219,7 @@ class AdminController extends Controller
             return redirect()->route('admin.dashboard')->withErrors($validator)->withInput();
         }
 
-        $admin = auth()->guard('admin')->user();
+        $admin = auth()->guard('role')->user();
         if (!Hash::check($request->current_password, $admin->password)) {
             return redirect()->route('admin.dashboard')->withErrors(['current_password' => 'Password saat ini salah.']);
         }
@@ -193,32 +254,6 @@ class AdminController extends Controller
         ]);
 
         return back()->with('message', '✅ Admin baru berhasil dibuat.');
-    }
-
-    /**
-     * Menghapus akun admin yang sedang login.
-     */
-    public function deleteAccount(Request $request)
-    {
-        $validator = Validator::make($request->all(), ['password' => 'required|string']);
-        if ($validator->fails()) {
-            return redirect()->route('admin.dashboard')->withErrors($validator)->withInput();
-        }
-
-        $admin = auth()->guard('admin')->user();
-        if (!Hash::check($request->password, $admin->password)) {
-            return redirect()->route('admin.dashboard')->withErrors(['password' => 'Password yang Anda masukkan salah.']);
-        }
-
-        $allAdmins = Role::count();
-        if ($allAdmins <= 1) {
-            return redirect()->route('admin.dashboard')->withErrors(['deleteAccount' => 'Anda tidak dapat menghapus akun ini karena hanya ada satu admin yang tersisa.']);
-        }
-
-        $admin->delete();
-        auth()->guard('roles')->logout();
-
-        return redirect()->route('login')->with('message', 'Akun Anda telah berhasil dihapus.');
     }
 
     /**
