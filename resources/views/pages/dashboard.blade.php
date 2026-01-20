@@ -71,9 +71,9 @@
                             <span class="sm:hidden">Filter</span>
                         </button>
 
-                        @auth('admin')
+                        @auth('role')
                             <!-- Back -->
-                            <a href="{{ route('admins.dashboard') }}"
+                            <a href="{{ route('admin.dashboard') }}"
                                 class="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 active:scale-[.98] transition flex items-center gap-1.5 sm:gap-2 shadow-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />

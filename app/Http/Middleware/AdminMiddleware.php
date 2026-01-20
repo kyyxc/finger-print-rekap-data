@@ -15,8 +15,8 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->guard('admin')->check()) {
-            return redirect()->route('admins.login')->withErrors(['error' => 'You must be logged in as an admin to access this page.']);
+        if (!auth()->guard('role')->check()) {
+            return redirect()->route('login')->withErrors(['error' => 'You must be logged in as an admin to access this page.']);
         }
         return $next($request);
     }
