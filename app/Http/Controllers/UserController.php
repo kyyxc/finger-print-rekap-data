@@ -248,7 +248,7 @@ class UserController extends Controller
         // dd(Attendance::all());
 
         // Opsional tapi sangat disarankan: Hapus data setelah diambil
-        // $zk->clearAttendance();
+        $zk->clearAttendance();
         $zk->disconnect();
     }
 }
