@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
+use App\Models\Grade;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -15,5 +18,110 @@ class SekretarisController extends Controller
             Log::error('Gagal sinkronisasi user: ' . $e->getMessage());
         }
         return view('pages.sekretaris.dashboard');
+    }
+
+    public function users(Request $request)
+    {
+        $perPage = $request->get('per_page', 10);
+        $users = User::orderBy('nama', 'asc')->paginate($perPage);
+        
+        return view('pages.sekretaris.users', compact('users', 'perPage'));
+    }
+
+    public function absensi()
+    {
+        return view('pages.sekretaris.absensi');
+    }
+
+    public function kelolaAbsen(Request $request)
+    {
+        try {
+            // Get logged in sekretaris data with grade relationship
+            $sekretaris = auth()->guard('role')->user()->load('grade');
+            
+            // Get kelas from sekretaris grade
+            $grade = $sekretaris->grade;
+            
+            if (!$grade) {
+                return redirect()->route('sekretaris.dashboard')
+                    ->with('error', 'Anda belum ditugaskan ke kelas manapun. Silakan hubungi admin.');
+            }
+            
+            $kelasName = $grade->name;
+            
+            // Get selected date (default today)
+            $selectedDate = $request->get('tanggal', now()->toDateString());
+            
+            // Get students data from sekretaris's class
+            $students = User::where('kelas', $kelasName)
+                ->orderBy('nama', 'asc')
+                ->get()
+                ->map(function ($student) use ($selectedDate) {
+                    // Get attendance record for the selected date
+                    $attendance = Attendance::where('user_id', $student->id)
+                        ->whereDate('record_time', $selectedDate)
+                        ->first();
+                    
+                    $student->attendance_status = $attendance ? $attendance->status : null;
+                    $student->attendance_id = $attendance ? $attendance->id : null;
+                    $student->record_time = $attendance ? $attendance->record_time : null;
+                    
+                    return $student;
+                });
+            
+            return view('pages.sekretaris.kelola-absen', compact('students', 'kelasName', 'selectedDate'));
+        } catch (\Exception $e) {
+            \Log::error('Error in kelolaAbsen: ' . $e->getMessage());
+            return redirect()->route('sekretaris.dashboard')
+                ->with('error', 'Terjadi kesalahan. Silakan coba lagi.');
+        }
+    }
+
+    public function updateAbsen(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'tanggal' => 'required|date',
+            'status' => 'required|in:hadir,izin,sakit,alpha',
+        ]);
+
+        $userId = $request->user_id;
+        $tanggal = $request->tanggal;
+        $status = $request->status;
+        $waktu = $request->waktu ?? now()->format('H:i:s');
+
+        // Check if attendance record exists
+        $attendance = Attendance::where('user_id', $userId)
+            ->whereDate('record_time', $tanggal)
+            ->first();
+
+        $recordTime = $tanggal . ' ' . $waktu;
+
+        if ($attendance) {
+            // Update existing record
+            $attendance->update([
+                'status' => $status,
+                'record_time' => $recordTime,
+            ]);
+            $message = 'Status absensi berhasil diperbarui';
+        } else {
+            // Create new record
+            Attendance::create([
+                'user_id' => $userId,
+                'status' => $status,
+                'record_time' => $recordTime,
+            ]);
+            $message = 'Absensi berhasil ditambahkan';
+        }
+
+        return redirect()->back()->with('message', $message);
+    }
+
+    public function deleteAbsen($id)
+    {
+        $attendance = Attendance::findOrFail($id);
+        $attendance->delete();
+
+        return redirect()->back()->with('message', 'Absensi berhasil dihapus');
     }
 }
