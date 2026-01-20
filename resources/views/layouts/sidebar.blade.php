@@ -89,6 +89,13 @@
                     <span class="material-icons text-xl">school</span>
                     <span class="font-medium">Kelola Kelas</span>
                 </a>
+
+                {{-- KELOLA KELAS --}}
+                <a href="{{ route('admin.grades') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('admin.date') ? 'bg-blue-600 text-white' : 'hover:bg-slate-700 text-slate-300' }}">
+                    <span class="material-icons text-xl">date_range</span>
+                    <span class="font-medium">Kelola Jadwal</span>
+                </a>
             </nav>
 
             {{-- LOGOUT BUTTON --}}

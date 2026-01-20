@@ -5,7 +5,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SekretarisController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppBotController;
-use CodingLibs\ZktecoPhp\Libs\ZKTeco;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [UserController::class, 'dashboard'])->name('dashboard');
@@ -31,6 +30,7 @@ Route::prefix('admin')->group(function () {
 
         Route::post('sync-users', [AdminController::class, 'syncUsers'])->name('admin.users.sync');
         Route::get('users', [AdminController::class, 'users'])->name('admin.users');
+        Route::patch('users/{id}', [AdminController::class, 'updateUser'])->name('admin.users.update');
         Route::delete('users/{id}', [AdminController::class, 'destroy'])->name('admin.users.destroy');
         Route::post('import-users', [AdminController::class, 'importUsers'])->name('admin.users.import');
         Route::post('import-photos', [AdminController::class, 'importPhotos'])->name('admin.users.import.photos');

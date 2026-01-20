@@ -98,13 +98,41 @@ class AdminController extends Controller
             Log::error('Gagal sinkronisasi user: ' . $e->getMessage());
         }
 
+        $perPage = $request->get('per_page', 10);
+        $grades = Grade::orderBy('name', 'asc')->get();
+
         $users = User::query()
             ->orderBy('nama', 'asc')
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
-        return view('pages.admins.users', compact('users'));
+        return view('pages.admins.users', compact('users', 'grades', 'perPage'));
     }
 
+    /**
+     * Update a user
+     */
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'nis' => 'required|string|max:50|unique:users,nis,' . $id,
+            'nama' => 'required|string|max:255',
+            'kelas' => 'nullable|string|max:100',
+        ], [
+            'nis.required' => 'NIS wajib diisi.',
+            'nis.unique' => 'NIS sudah digunakan.',
+            'nama.required' => 'Nama wajib diisi.',
+        ]);
+
+        $user->nis = $request->nis;
+        $user->nama = $request->nama;
+        $user->kelas = $request->kelas;
+        $user->save();
+
+        return redirect()->route('admin.users')->with('message', '✅ Data siswa berhasil diperbarui.');
+    }
 
     public function destroy($id)
     {
@@ -124,7 +152,7 @@ class AdminController extends Controller
         }
         $user->delete();
 
-        return redirect()->route('admins.users')->with('message', 'User berhasil dihapus (soft delete).');
+        return redirect()->route('admin.users')->with('message', '✅ User berhasil dihapus.');
     }
 
     public function importUsers(Request $request)
