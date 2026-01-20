@@ -36,7 +36,7 @@ class AuthController extends Controller
 
             return redirect()->route('sekretaris.dashboard')->with('message', 'Login berhasil');
         } else {
-            auth()->guard('admin')->logout();
+            auth()->guard('role')->logout();
         }
 
         return redirect()->back()->withErrors(['login' => 'Invalid credentials']);

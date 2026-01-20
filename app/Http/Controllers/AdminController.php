@@ -158,7 +158,7 @@ class AdminController extends Controller
             return redirect()->route('admin.dashboard')->withErrors($validator)->withInput();
         }
 
-        $admin = auth()->guard('admin')->user();
+        $admin = auth()->guard('role')->user();
         if (!Hash::check($request->current_password, $admin->password)) {
             return redirect()->route('admin.dashboard')->withErrors(['current_password' => 'Password saat ini salah.']);
         }

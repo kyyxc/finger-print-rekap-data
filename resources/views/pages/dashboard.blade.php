@@ -82,7 +82,7 @@
                             </a>
 
                             <!-- Export -->
-                            <a href="{{ route('admins.attendances.export') }}?{{ request()->getQueryString() }}"
+                            <a href="{{ route('admin.attendances.export') }}?{{ request()->getQueryString() }}"
                                 class="bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-green-700 active:scale-[.98] transition flex items-center gap-1.5 sm:gap-2 shadow-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor" stroke-width="2">
@@ -338,8 +338,8 @@
         </main>
 
         <div id="filterModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 modal-overlay opacity-0 pointer-events-none transition-opacity duration-200">
-            <div class="bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-2xl p-4 sm:p-8 m-3 sm:m-4 transform scale-95 modal-content transition-transform duration-200 max-h-[90vh] overflow-y-auto">
+            class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500/30 backdrop-blur-sm modal-overlay opacity-0 pointer-events-none transition-opacity duration-200">
+            <div class="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-2xl p-4 sm:p-8 m-3 sm:m-4 transform scale-95 modal-content transition-transform duration-200 max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-4 sm:mb-6">
                     <h3 class="text-lg sm:text-2xl font-bold text-gray-800">Filter Data</h3>
                     <button id="closeFilterModal" class="text-gray-500 hover:text-gray-800 p-1">
