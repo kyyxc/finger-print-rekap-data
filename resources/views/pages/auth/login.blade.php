@@ -115,21 +115,12 @@
                 <h2 class="text-2xl font-light mb-6 text-red-600">SMKN 2 Sukabumi</h2>
 
                 <p class="text-center text-gray-600 max-w-md leading-relaxed mb-8">
-                    Sistem manajemen kehadiran siswa yang terintegrasi dengan mesin fingerprint untuk monitoring real-time.
+                    Sistem manajemen kehadiran siswa yang terintegrasi dengan mesin fingerprint untuk monitoring.
                 </p>
 
                 <!-- Features -->
                 <div class="space-y-4 w-full max-w-sm">
-                    <div
-                        class="flex items-center gap-4 bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-red-100">
-                        <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <span class="text-sm text-gray-700">Monitoring kehadiran real-time</span>
-                    </div>
+
                     <div
                         class="flex items-center gap-4 bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-red-100">
                         <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
