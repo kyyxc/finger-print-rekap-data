@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\AttendancesExport;
 use App\Imports\UserImport;
 use App\Models\Admin;
+use App\Models\Role;
 use App\Models\User;
 use CodingLibs\ZktecoPhp\Libs\ZKTeco;
 use Illuminate\Http\Request;
@@ -24,8 +25,7 @@ class AdminController extends Controller
         } catch (\Exception $e) {
             Log::error('Gagal sinkronisasi user: ' . $e->getMessage());
         }
-        // dd('Admin Dashboard');
-        return view('pages.admins.dashboard');
+        return view('pages.admins.dashboard1');
     }
 
     public function users(Request $request)
@@ -58,35 +58,12 @@ class AdminController extends Controller
             $zk->removeUser($user->uid);
         } catch (\Exception $e) {
             Log::error('Gagal menghapus user dari mesin absensi: ' . $e->getMessage());
-            return redirect()->route('admins.dashboard')->withErrors(['error' => 'Gagal menghapus user dari mesin fingerprint']);
+            return redirect()->route('admin.dashboard')->withErrors(['error' => 'Gagal menghapus user dari mesin fingerprint']);
         }
         $user->delete();
 
         return redirect()->route('admins.users')->with('message', 'User berhasil dihapus (soft delete).');
     }
-
-    // public function deleteAllUsers() {
-    //     $zk = new ZKTeco(config('services.zkteco.ip'));
-
-    //     if (!$zk->connect()) {
-    //         Log::error('Gagal terhubung ke mesin absensi saat menghapus semua user.');
-    //     }
-
-    //     // dd($zk->clearAllUsers());
-
-    //     // if (!$zk->clearAllUsers()) {
-    //     //     Log::error('Gagal menghapus semua user dari mesin absensi.');
-    //     //     return redirect()->route('admins.dashboard')->withErrors(['error' => 'Gagal menghapus semua user dari mesin fingerprint']);
-    //     // }
-
-    //     if ($zk->deleteUsers(fn($user) => true)) {
-    //         Log::error('Gagal menghapus semua user dari mesin absensi.');
-    //         return redirect()->route('admins.dashboard')->withErrors(['error' => 'Gagal menghapus semua user dari mesin fingerprint']);
-    //     }
-
-    //     $zk->disconnect();
-    //     return redirect()->route('admins.users')->with('message', 'Semua user berhasil dihapus dari mesin fingerprint dan database.');
-    // }
 
     public function importUsers(Request $request)
     {
@@ -168,15 +145,7 @@ class AdminController extends Controller
         return Excel::download(new AttendancesExport($request), $fileName);
     }
 
-    public function login(Request $request)
-    {
-        if (auth()->guard('admin')->check()) {
-            return redirect()->route('admins.dashboard');
-        }
 
-        $admin = $request->has('admin');
-        return view('pages.admins.login', compact('admin'));
-    }
 
     public function changePassword(Request $request)
     {
@@ -186,16 +155,16 @@ class AdminController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route('admins.dashboard')->withErrors($validator)->withInput();
+            return redirect()->route('admin.dashboard')->withErrors($validator)->withInput();
         }
 
         $admin = auth()->guard('admin')->user();
         if (!Hash::check($request->current_password, $admin->password)) {
-            return redirect()->route('admins.dashboard')->withErrors(['current_password' => 'Password saat ini salah.']);
+            return redirect()->route('admin.dashboard')->withErrors(['current_password' => 'Password saat ini salah.']);
         }
 
         if ($request->current_password == $request->new_password) {
-            return redirect()->route('admins.dashboard')->withErrors(['new_password' => 'Password baru harus berbeda.']);
+            return redirect()->route('admin.dashboard')->withErrors(['new_password' => 'Password baru harus berbeda.']);
         }
 
         $admin->password = Hash::make($request->new_password);
@@ -215,10 +184,10 @@ class AdminController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route('admins.dashboard')->withErrors($validator)->withInput();
+            return redirect()->route('admin.dashboard')->withErrors($validator)->withInput();
         }
 
-        Admin::create([
+        Role::create([
             'username' => $request->username,
             'password' => Hash::make($request->password),
         ]);
@@ -233,44 +202,46 @@ class AdminController extends Controller
     {
         $validator = Validator::make($request->all(), ['password' => 'required|string']);
         if ($validator->fails()) {
-            return redirect()->route('admins.dashboard')->withErrors($validator)->withInput();
+            return redirect()->route('admin.dashboard')->withErrors($validator)->withInput();
         }
 
         $admin = auth()->guard('admin')->user();
         if (!Hash::check($request->password, $admin->password)) {
-            return redirect()->route('admins.dashboard')->withErrors(['password' => 'Password yang Anda masukkan salah.']);
+            return redirect()->route('admin.dashboard')->withErrors(['password' => 'Password yang Anda masukkan salah.']);
         }
 
-        $allAdmins = Admin::count();
+        $allAdmins = Role::count();
         if ($allAdmins <= 1) {
-            return redirect()->route('admins.dashboard')->withErrors(['deleteAccount' => 'Anda tidak dapat menghapus akun ini karena hanya ada satu admin yang tersisa.']);
+            return redirect()->route('admin.dashboard')->withErrors(['deleteAccount' => 'Anda tidak dapat menghapus akun ini karena hanya ada satu admin yang tersisa.']);
         }
 
         $admin->delete();
-        auth()->guard('admin')->logout();
+        auth()->guard('roles')->logout();
 
-        return redirect()->route('admins.login')->with('message', 'Akun Anda telah berhasil dihapus.');
+        return redirect()->route('login')->with('message', 'Akun Anda telah berhasil dihapus.');
     }
 
-    public function authenticate(Request $request)
+    /**
+     * Kelola Admin
+     */
+    public function admins()
     {
-        $credentials = $request->only('username', 'password');
-        $remember = $request->has('remember');
-        if (auth()->guard('admin')->attempt($credentials, $remember)) {
-            // dd('Login a');
-            return redirect()->route('admins.dashboard')->with('message', 'Login berhasil');
-        } else {
-            // dd('Login gagal');
-            auth()->guard('admin')->logout();
-        }
-
-        return redirect()->back()->withErrors(['login' => 'Invalid credentials']);
+        return view('pages.admins.admins');
     }
 
-    public function logout(Request $request)
+    /**
+     * Kelola Sekretaris
+     */
+    public function sekretaris()
     {
-        auth()->guard('admin')->logout();
-        return redirect()->route('admins.login')->with('message', 'Logged out successfully');
-        // return true;
+        return view('pages.admins.sekretaris');
+    }
+
+    /**
+     * Kelola Kelas/Grade
+     */
+    public function grades()
+    {
+        return view('pages.admins.grades');
     }
 }

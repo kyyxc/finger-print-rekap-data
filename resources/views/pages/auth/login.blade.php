@@ -4,10 +4,10 @@
 
 @section('content')
     <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-        <form method="POST" action="{{ route('admins.authenticate') }}"
+        <form method="POST" action="{{ route('authenticate') }}"
             class="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm border">
             @csrf
-            <h2 class="text-2xl font-bold mb-5 text-center text-gray-800">Login Admin</h2>
+            <h2 class="text-2xl font-bold mb-5 text-center text-gray-800">Login</h2>
 
             @if (session('message'))
                 <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
@@ -20,10 +20,6 @@
                     <span class="block sm:inline">{{ $message }}</span>
                 </div>
             @enderror
-
-            @if ($admin)
-                <input type="hidden" name="admin" value="true">
-            @endif
 
             <div class="mb-4">
                 <label for="username" class="sr-only">Username</label>

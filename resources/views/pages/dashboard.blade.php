@@ -112,10 +112,10 @@
                             </svg>
                             Filter Data
                         </button>
-                        @auth('admin')
-                            <a href="{{ route('admins.dashboard') }}"
+                        @auth('role')
+                            <a href="{{ route('admin.dashboard') }}"
                                 class="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2"">Back to Dashboard</a>
-                                    <a href=" {{ route('admins.attendances.export') }}?{{ request()->getQueryString() }}"
+                                    <a href=" {{ route('admin.attendances.export') }}?{{ request()->getQueryString() }}"
                                 class="bg-green-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor" stroke-width="2">

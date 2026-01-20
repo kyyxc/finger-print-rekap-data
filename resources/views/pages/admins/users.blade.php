@@ -31,7 +31,7 @@
                         <button class="bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600 w-fit">Delete All
                             Users</button>
                     </form> --}}
-                    <a href="{{ route('admins.dashboard') }}"
+                    <a href="{{ route('admin.dashboard') }}"
                         class="bg-yellow-500 text-white px-4 py-2 rounded-xl hover:bg-yellow-600 w-fit">Back</a>
                 </div>
             </div>
@@ -73,7 +73,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-2">
-                                    <form method="POST" action="{{ route('admins.users.destroy', $user->id) }}"
+                                    <form method="POST" action="{{ route('admin.users.destroy', $user->id) }}"
                                         onsubmit="return confirm('Yakin ingin hapus user ini?')" class="flex justify-center">
                                         @csrf
                                         @method('DELETE')

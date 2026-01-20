@@ -70,7 +70,7 @@ class UserController extends Controller
         // dd($zk->getAttendances());
         // dd($zk->getUsers());
         $attendancesFromMachine = collect($zk->getAttendances());
-  
+
         if ($attendancesFromMachine->isEmpty()) {
             $zk->disconnect();
             return;
@@ -105,9 +105,9 @@ class UserController extends Controller
         foreach ($attendancesFromMachine as $att) {
             $userId = $att['user_id'];
             $timestamp = Carbon::parse($att['record_time']);
-            
+
             $role = $rolesMap[$userId] ?? null;
-            
+
             if ($role == 14 || (in_array($att['type'], [1, 5]) && $timestamp->hour < 13)) {
                 continue;
             }

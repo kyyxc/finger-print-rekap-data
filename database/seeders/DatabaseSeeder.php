@@ -2,8 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Admin;
-use App\Models\User;
+use App\Models\Role;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -21,9 +20,16 @@ class DatabaseSeeder extends Seeder
         //     'email' => 'test@example.com',
         // ]);
 
-        Admin::create([
-            'username' => 'admin',
-            'password' => bcrypt('password123'),
+        Role::create([
+            'username' => config('app.admin_username'),
+            'password' => bcrypt(config('app.admin_password')),
+            'role' => 'admin',
+        ]);
+
+        Role::create([
+            'username' => config('app.sekretaris_username'),
+            'password' => bcrypt(config('app.sekretaris_password')),
+            'role' => 'sekretaris'
         ]);
     }
 }

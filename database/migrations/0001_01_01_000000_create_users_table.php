@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('nama')->nullable();
             $table->string('photo')->nullable();
             $table->string('kelas')->nullable();
+            $table->string('phone_number')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });
