@@ -41,7 +41,14 @@ Route::prefix('admin')->group(function () {
         Route::delete('admins/{id}', [AdminController::class, 'deleteAdmin'])->name('admin.admins.destroy');
 
         Route::get('sekretaris', [AdminController::class, 'sekretaris'])->name('admin.sekretaris');
+        Route::post('sekretaris', [AdminController::class, 'createSekretaris'])->name('admin.sekretaris.store');
+        Route::patch('sekretaris/{id}', [AdminController::class, 'updateSekretaris'])->name('admin.sekretaris.update');
+        Route::delete('sekretaris/{id}', [AdminController::class, 'deleteSekretaris'])->name('admin.sekretaris.destroy');
+
         Route::get('grades', [AdminController::class, 'grades'])->name('admin.grades');
+        Route::post('grades', [AdminController::class, 'createGrade'])->name('admin.grades.store');
+        Route::patch('grades/{id}', [AdminController::class, 'updateGrade'])->name('admin.grades.update');
+        Route::delete('grades/{id}', [AdminController::class, 'deleteGrade'])->name('admin.grades.destroy');
     });
 });
 

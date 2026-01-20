@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\AttendancesExport;
 use App\Imports\UserImport;
 use App\Models\Admin;
+use App\Models\Grade;
 use App\Models\Role;
 use App\Models\User;
 use CodingLibs\ZktecoPhp\Libs\ZKTeco;
@@ -268,16 +269,180 @@ class AdminController extends Controller
     /**
      * Kelola Sekretaris
      */
-    public function sekretaris()
+    public function sekretaris(Request $request)
     {
-        return view('pages.admins.sekretaris');
+        $perPage = $request->get('per_page', 10);
+
+        $sekretaris = Role::with('grade')
+            ->where('role', 'sekretaris')
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->appends($request->query());
+
+        $grades = Grade::orderBy('name', 'asc')->get();
+
+        return view('pages.admins.sekretaris', compact('sekretaris', 'grades', 'perPage'));
+    }
+
+    /**
+     * Create a new sekretaris
+     */
+    public function createSekretaris(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string|max:255|unique:roles,username',
+            'password' => 'required|string|min:6|confirmed',
+            'grade_id' => 'required|exists:grades,id',
+        ], [
+            'username.required' => 'Username wajib diisi.',
+            'username.unique' => 'Username sudah digunakan.',
+            'password.required' => 'Password wajib diisi.',
+            'password.min' => 'Password minimal 6 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'grade_id.required' => 'Kelas wajib dipilih.',
+            'grade_id.exists' => 'Kelas tidak valid.',
+        ]);
+
+        Role::create([
+            'username' => $request->username,
+            'password' => bcrypt($request->password),
+            'role' => 'sekretaris',
+            'grade_id' => $request->grade_id,
+        ]);
+
+        return redirect()->route('admin.sekretaris')->with('message', '✅ Sekretaris berhasil ditambahkan.');
+    }
+
+    /**
+     * Update a sekretaris
+     */
+    public function updateSekretaris(Request $request, $id)
+    {
+        $sekretaris = Role::where('role', 'sekretaris')->findOrFail($id);
+
+        $rules = [
+            'username' => 'required|string|max:255|unique:roles,username,' . $id,
+            'grade_id' => 'required|exists:grades,id',
+        ];
+
+        $messages = [
+            'username.required' => 'Username wajib diisi.',
+            'username.unique' => 'Username sudah digunakan.',
+            'grade_id.required' => 'Kelas wajib dipilih.',
+            'grade_id.exists' => 'Kelas tidak valid.',
+        ];
+
+        // Only validate password if it's provided
+        if ($request->filled('password')) {
+            $rules['password'] = 'string|min:6|confirmed';
+            $messages['password.min'] = 'Password minimal 6 karakter.';
+            $messages['password.confirmed'] = 'Konfirmasi password tidak cocok.';
+        }
+
+        $request->validate($rules, $messages);
+
+        $sekretaris->username = $request->username;
+        $sekretaris->grade_id = $request->grade_id;
+
+        if ($request->filled('password')) {
+            $sekretaris->password = bcrypt($request->password);
+        }
+
+        $sekretaris->save();
+
+        return redirect()->route('admin.sekretaris')->with('message', '✅ Sekretaris berhasil diperbarui.');
+    }
+
+    /**
+     * Delete a sekretaris
+     */
+    public function deleteSekretaris($id)
+    {
+        $currentUser = auth()->guard('role')->user();
+
+        if ($currentUser->id == $id) {
+            return redirect()->route('admin.sekretaris')->withErrors(['error' => 'Anda tidak dapat menghapus akun sendiri.']);
+        }
+
+        $sekretaris = Role::where('role', 'sekretaris')->findOrFail($id);
+        $sekretaris->delete();
+
+        return redirect()->route('admin.sekretaris')->with('message', '✅ Sekretaris berhasil dihapus.');
     }
 
     /**
      * Kelola Kelas/Grade
      */
-    public function grades()
+    public function grades(Request $request)
     {
-        return view('pages.admins.grades');
+        $perPage = $request->get('per_page', 10);
+
+        $grades = Grade::withCount(['users' => function ($query) {
+                $query->whereNull('deleted_at');
+            }])
+            ->orderBy('name', 'asc')
+            ->paginate($perPage)
+            ->appends($request->query());
+
+        return view('pages.admins.grades', compact('grades', 'perPage'));
+    }
+
+    /**
+     * Create a new grade
+     */
+    public function createGrade(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:grades,name',
+        ], [
+            'name.required' => 'Nama kelas wajib diisi.',
+            'name.unique' => 'Nama kelas sudah ada.',
+        ]);
+
+        Grade::create([
+            'name' => $request->name,
+        ]);
+
+        return redirect()->route('admin.grades')->with('message', 'Kelas berhasil ditambahkan.');
+    }
+
+    /**
+     * Update a grade
+     */
+    public function updateGrade(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:grades,name,' . $id,
+        ], [
+            'name.required' => 'Nama kelas wajib diisi.',
+            'name.unique' => 'Nama kelas sudah ada.',
+        ]);
+
+        $grade = Grade::findOrFail($id);
+        $oldName = $grade->name;
+        $grade->update(['name' => $request->name]);
+
+        // Update users with old grade name to new grade name
+        User::where('kelas', $oldName)->update(['kelas' => $request->name]);
+
+        return redirect()->route('admin.grades')->with('message', 'Kelas berhasil diperbarui.');
+    }
+
+    /**
+     * Delete a grade
+     */
+    public function deleteGrade($id)
+    {
+        $grade = Grade::findOrFail($id);
+
+        // Check if there are users in this grade
+        $usersCount = User::where('kelas', $grade->name)->count();
+        if ($usersCount > 0) {
+            return redirect()->route('admin.grades')->withErrors(['delete' => 'Tidak dapat menghapus kelas yang masih memiliki siswa.']);
+        }
+
+        $grade->delete();
+
+        return redirect()->route('admin.grades')->with('message', 'Kelas berhasil dihapus.');
     }
 }
