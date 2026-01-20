@@ -70,6 +70,7 @@ class UserController extends Controller
         // dd($zk->getAttendances());
         // dd($zk->getUsers());
         $attendancesFromMachine = collect($zk->getAttendances());
+  
         if ($attendancesFromMachine->isEmpty()) {
             $zk->disconnect();
             return;
@@ -104,8 +105,10 @@ class UserController extends Controller
         foreach ($attendancesFromMachine as $att) {
             $userId = $att['user_id'];
             $timestamp = Carbon::parse($att['record_time']);
-
-            if ($rolesMap[$userId] == 14 || (in_array($att['type'], [1, 5]) && $timestamp->format('H:i') < '13:00')) {
+            
+            $role = $rolesMap[$userId] ?? null;
+            
+            if ($role == 14 || (in_array($att['type'], [1, 5]) && $timestamp->hour < 13)) {
                 continue;
             }
 
@@ -139,7 +142,7 @@ class UserController extends Controller
         // dd(Attendance::all());
 
         // Opsional tapi sangat disarankan: Hapus data setelah diambil
-        $zk->clearAttendance();
+        // $zk->clearAttendance();
         $zk->disconnect();
     }
 }

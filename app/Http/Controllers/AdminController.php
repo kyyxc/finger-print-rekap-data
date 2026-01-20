@@ -28,20 +28,20 @@ class AdminController extends Controller
         return view('pages.admins.dashboard');
     }
 
-public function users(Request $request)
-{
-    try {
-        $this->createUser();
-    } catch (\Exception $e) {
-        Log::error('Gagal sinkronisasi user: ' . $e->getMessage());
+    public function users(Request $request)
+    {
+        try {
+            $this->createUser();
+        } catch (\Exception $e) {
+            Log::error('Gagal sinkronisasi user: ' . $e->getMessage());
+        }
+
+        $users = User::query()
+            ->orderBy('nama', 'asc')
+            ->get();
+
+        return view('pages.admins.users', compact('users'));
     }
-
-    $users = User::query()
-        ->orderBy('nama', 'asc')
-        ->get();
-
-    return view('pages.admins.users', compact('users'));
-}
 
 
     public function destroy($id)
@@ -254,12 +254,10 @@ public function users(Request $request)
 
     public function authenticate(Request $request)
     {
-        $admin = $request->has('admin');
         $credentials = $request->only('username', 'password');
         $remember = $request->has('remember');
-
-        if (auth()->guard('admin')->attempt($credentials, $remember) && $admin) {
-            // dd('Login berhasil');
+        if (auth()->guard('admin')->attempt($credentials, $remember)) {
+            // dd('Login a');
             return redirect()->route('admins.dashboard')->with('message', 'Login berhasil');
         } else {
             // dd('Login gagal');

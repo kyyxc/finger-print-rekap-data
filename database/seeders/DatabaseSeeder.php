@@ -22,8 +22,8 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         Admin::create([
-            'username' => config('app.admin_username'),
-            'password' => bcrypt(config('app.admin_password')),
+            'username' => 'admin',
+            'password' => bcrypt('password123'),
         ]);
     }
 }
