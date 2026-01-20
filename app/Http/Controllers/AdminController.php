@@ -206,62 +206,63 @@ class AdminController extends Controller
         return Excel::download(new AttendancesExport($request), $fileName);
     }
 
-
-
-    public function changePassword(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'current_password' => 'required|string',
-            'new_password' => 'required|string|min:6|confirmed',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->route('admin.dashboard')->withErrors($validator)->withInput();
-        }
-
-        $admin = auth()->guard('role')->user();
-        if (!Hash::check($request->current_password, $admin->password)) {
-            return redirect()->route('admin.dashboard')->withErrors(['current_password' => 'Password saat ini salah.']);
-        }
-
-        if ($request->current_password == $request->new_password) {
-            return redirect()->route('admin.dashboard')->withErrors(['new_password' => 'Password baru harus berbeda.']);
-        }
-
-        $admin->password = Hash::make($request->new_password);
-        $admin->save();
-
-        return back()->with('message', '✅ Password berhasil diubah.');
-    }
-
     /**
      * Membuat admin baru.
      */
     public function createAdmin(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'username' => 'required|string|max:255|unique:admins,username',
+            'username' => 'required|string|max:255|unique:roles,username',
             'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|in:admin,sekretaris',
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route('admin.dashboard')->withErrors($validator)->withInput();
+            return redirect()->route('admin.admins')->withErrors($validator)->withInput();
         }
 
         Role::create([
             'username' => $request->username,
             'password' => Hash::make($request->password),
+            'role' => $request->role,
         ]);
 
-        return back()->with('message', '✅ Admin baru berhasil dibuat.');
+        return back()->with('message', 'Admin baru berhasil dibuat.');
     }
 
     /**
      * Kelola Admin
      */
-    public function admins()
+    public function admins(Request $request)
     {
-        return view('pages.admins.admins');
+        $currentUserId = auth()->guard('role')->user()->id;
+        $perPage = $request->get('per_page', 10);
+
+        $admins = Role::where('role', 'admin')
+            ->where('id', '!=', $currentUserId)
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->appends($request->query());
+
+        return view('pages.admins.admins', compact('admins', 'perPage'));
+    }
+
+    /**
+     * Hapus Admin
+     */
+    public function deleteAdmin($id)
+    {
+        $currentUserId = auth()->guard('role')->user()->id;
+
+        // Tidak boleh hapus diri sendiri
+        if ($id == $currentUserId) {
+            return redirect()->route('admin.admins')->withErrors(['error' => 'Anda tidak dapat menghapus akun sendiri dari sini.']);
+        }
+
+        $admin = Role::findOrFail($id);
+        $admin->delete();
+
+        return redirect()->route('admin.admins')->with('message', '✅ Admin berhasil dihapus.');
     }
 
     /**

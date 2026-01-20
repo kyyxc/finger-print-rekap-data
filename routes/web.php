@@ -33,6 +33,8 @@ Route::prefix('admin')->group(function () {
 
         // Kelola Admin, Sekretaris, Kelas
         Route::get('admins', [AdminController::class, 'admins'])->name('admin.admins');
+        Route::delete('admins/{id}', [AdminController::class, 'deleteAdmin'])->name('admin.admins.destroy');
+
         Route::get('sekretaris', [AdminController::class, 'sekretaris'])->name('admin.sekretaris');
         Route::get('grades', [AdminController::class, 'grades'])->name('admin.grades');
     });
