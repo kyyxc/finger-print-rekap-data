@@ -33,6 +33,7 @@ abstract class Controller
             return [
                 'nis' => $user['user_id'],
                 'uid' => $user['uid'],
+                'nama' => $user['name'] == $user['user_id'] ? null : $user['name'],
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -42,7 +43,7 @@ abstract class Controller
             User::upsert(
                 $usersToSync,
                 ['nis'],
-                ['uid', 'updated_at']
+                ['uid', 'updated_at', 'nama']
             );
         }
 
