@@ -153,13 +153,21 @@
                                     <td>{{ $attendance->user->nis ?? '-' }}</td>
                                     <td>{{ $attendance->user->nama ?? '-' }}</td>
                                     <td>{{ $attendance->user->kelas ?? '-' }}</td>
-                                    <td>{{ $attendance->record_time->format('H:i, d-m-Y') }}</td>
-                                    <td>
-                                        <span
-                                            class="px-3 py-1 rounded-full text-xs font-semibold {{ $attendance->badge_color }}">
-                                            {{ ucfirst($attendance->status) }}
-                                        </span>
-                                    </td>
+<td>
+    {{ $attendance->record_time?->format('H:i, d-m-Y') ?? '-' }}
+</td>
+                     <td>
+    @if (is_null($attendance->status))
+        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-300 text-gray-800">
+            Tidak Hadir
+        </span>
+    @else
+        <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $attendance->badge_color }}">
+            {{ ucfirst($attendance->status) }}
+        </span>
+    @endif
+</td>
+
                                 </tr>
                             @endforeach
                         </tbody>
@@ -228,27 +236,54 @@
                         </div>
                     </div>
 
-                    <fieldset class="mb-8">
-                        <legend class="text-lg font-semibold text-gray-700 mb-3">Filter Berdasarkan Status</legend>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            <div class="flex items-center">
-                                <input id="status_masuk" name="status[]" type="checkbox" value="masuk" @if(in_array('masuk', request('status', []))) checked @endif
-                                    class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
-                                <label for="status_masuk" class="ml-3 text-sm text-gray-600">Masuk</label>
-                            </div>
-                            <div class="flex items-center">
-                                <input id="status_telat" name="status[]" type="checkbox" value="telat" @if(in_array('telat', request('status', []))) checked @endif
-                                    class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
-                                <label for="status_telat" class="ml-3 text-sm text-gray-600">Telat</label>
-                            </div>
-                            <div class="flex items-center">
-                                <input id="status_pulang" name="status[]" type="checkbox" value="pulang"
-                                    @if(in_array('pulang', request('status', []))) checked @endif
-                                    class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
-                                <label for="status_pulang" class="ml-3 text-sm text-gray-600">Pulang</tabel>
-                            </div>
-                        </div>
-                    </fieldset>
+<fieldset class="mb-8">
+    <legend class="text-lg font-semibold text-gray-700 mb-3">Filter Berdasarkan Status</legend>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="flex items-center">
+            <input id="status_masuk" name="status[]" type="checkbox" value="masuk"
+                @if(in_array('masuk', request('status', []))) checked @endif
+                class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+            <label for="status_masuk" class="ml-3 text-sm text-gray-600">Masuk</label>
+        </div>
+
+        <div class="flex items-center">
+            <input id="status_telat" name="status[]" type="checkbox" value="telat"
+                @if(in_array('telat', request('status', []))) checked @endif
+                class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+            <label for="status_telat" class="ml-3 text-sm text-gray-600">Telat</label>
+        </div>
+
+        <div class="flex items-center">
+            <input id="status_pulang" name="status[]" type="checkbox" value="pulang"
+                @if(in_array('pulang', request('status', []))) checked @endif
+                class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+            <label for="status_pulang" class="ml-3 text-sm text-gray-600">Pulang</label>
+        </div>
+
+        {{-- BARU --}}
+        <div class="flex items-center">
+            <input id="status_izin" name="status[]" type="checkbox" value="izin"
+                @if(in_array('izin', request('status', []))) checked @endif
+                class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+            <label for="status_izin" class="ml-3 text-sm text-gray-600">Izin</label>
+        </div>
+
+        <div class="flex items-center">
+            <input id="status_sakit" name="status[]" type="checkbox" value="sakit"
+                @if(in_array('sakit', request('status', []))) checked @endif
+                class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+            <label for="status_sakit" class="ml-3 text-sm text-gray-600">Sakit</label>
+        </div>
+
+        <div class="flex items-center">
+            <input id="status_tidak_hadir" name="status[]" type="checkbox" value="tidak_hadir"
+                @if(in_array('tidak_hadir', request('status', []))) checked @endif
+                class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+            <label for="status_tidak_hadir" class="ml-3 text-sm text-gray-600">Tidak Hadir</label>
+        </div>
+    </div>
+</fieldset>
+
 
                     <div class="flex justify-end gap-4">
                         <a href="{{ route('dashboard') }}"

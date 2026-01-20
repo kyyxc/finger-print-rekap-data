@@ -13,6 +13,9 @@ class UserController extends Controller
 {
     public function dashboard(Request $request)
     {
+        // ==============================
+        // Sync user & attendance
+        // ==============================
         try {
             $this->createUser();
         } catch (\Exception $e) {
@@ -25,24 +28,35 @@ class UserController extends Controller
             Log::error('Gagal sinkronisasi absensi: ' . $e->getMessage());
         }
 
+        // ==============================
+        // Request input
+        // ==============================
         $dateType = $request->input('date_type', 'single');
-        $statuses = $request->input('status', []); // Default ke array kosong
+        $statuses = $request->has('status')
+            ? $request->input('status', [])
+            : ['masuk'];
 
+        // ==============================
+        // Base query attendance
+        // ==============================
         $query = Attendance::query()
             ->with('user')
             ->whereHas('user', fn($q) => $q->whereNull('deleted_at'));
 
+        // ==============================
+        // Date filter
+        // ==============================
         if ($dateType === 'range') {
             $startDate = $request->input('tanggal_mulai');
-            $endDate = $request->input('tanggal_akhir');
+            $endDate   = $request->input('tanggal_akhir');
 
             if ($startDate && $endDate) {
                 $realStartDate = min($startDate, $endDate);
-                $realEndDate = max($startDate, $endDate);
+                $realEndDate   = max($startDate, $endDate);
 
                 $query->whereBetween('record_time', [
                     Carbon::parse($realStartDate)->startOfDay(),
-                    Carbon::parse($realEndDate)->endOfDay()
+                    Carbon::parse($realEndDate)->endOfDay(),
                 ]);
             }
         } else {
@@ -50,13 +64,69 @@ class UserController extends Controller
             $query->whereDate('record_time', $singleDate);
         }
 
+        // ==============================
+        // Status filter
+        // ==============================
         if (!empty($statuses)) {
-            $query->whereIn('status', $statuses);
+            $query->where(function ($q) use ($statuses) {
+                if (in_array('tidak_hadir', $statuses)) {
+                    $q->whereNull('status')
+                        ->orWhereIn('status', array_diff($statuses, ['tidak_hadir']));
+                } else {
+                    $q->whereIn('status', $statuses);
+                }
+            });
         }
 
-        $results = $query->orderBy('record_time', 'desc')->get();
 
-        return view('pages.dashboard', ['query' => $results]);
+        // ==============================
+        // Get attendance results
+        // ==============================
+        $results = $query
+            ->orderBy('record_time', 'desc')
+            ->get();
+
+        // ===================================================
+        // Tambahkan USER YANG BELUM HADIR (SINGLE DATE ONLY)
+        // ===================================================
+        if ($dateType === 'single') {
+            $singleDate = $request->input('tanggal_tunggal', now()->toDateString());
+
+            // Semua user aktif
+            $allUsers = User::whereNull('deleted_at')->get();
+
+            // User yang sudah punya attendance
+            $presentUserIds = $results->pluck('user_id')->unique();
+
+            // User yang tidak hadir
+            $absentAttendances = $allUsers
+                ->whereNotIn('id', $presentUserIds)
+                ->map(function ($user) {
+                    $attendance = new Attendance();
+                    $attendance->user_id = $user->id;
+                    $attendance->user = $user; // penting untuk blade
+                    $attendance->status = null; // TIDAK HADIR
+                    $attendance->record_time = null;
+
+                    return $attendance;
+                });
+
+            // Gabungkan & rapikan
+            // Tambahkan tidak hadir HANYA jika dipilih di filter
+            if (in_array('tidak_hadir', $statuses)) {
+                $results = $results
+                    ->concat($absentAttendances)
+                    ->sortByDesc(fn($item) => $item->record_time ?? '0000-00-00')
+                    ->values();
+            }
+        }
+
+        // ==============================
+        // Return view
+        // ==============================
+        return view('pages.dashboard', [
+            'query' => $results,
+        ]);
     }
 
     private function syncAttendancesFromMachine()
@@ -70,7 +140,7 @@ class UserController extends Controller
         // dd($zk->getAttendances());
         // dd($zk->getUsers());
         $attendancesFromMachine = collect($zk->getAttendances());
-  
+
         if ($attendancesFromMachine->isEmpty()) {
             $zk->disconnect();
             return;
@@ -105,9 +175,9 @@ class UserController extends Controller
         foreach ($attendancesFromMachine as $att) {
             $userId = $att['user_id'];
             $timestamp = Carbon::parse($att['record_time']);
-            
+
             $role = $rolesMap[$userId] ?? null;
-            
+
             if ($role == 14 || (in_array($att['type'], [1, 5]) && $timestamp->hour < 13)) {
                 continue;
             }
