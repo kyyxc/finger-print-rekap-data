@@ -2,76 +2,100 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Http;
+use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class WhatsAppBotController extends Controller
 {
-    private $targetPhone = '85798549635';
+    private $whatsappService;
+    private $targetTime = '14:21'; // Ubah disini untuk ganti jadwal
+
+    private $defaultPhones = [
+        '081958749289',
+        '085798549635',
+        '083808087144',
+    ];
+
+    public function __construct(WhatsAppService $whatsappService)
+    {
+        $this->whatsappService = $whatsappService;
+    }
 
     public function testPage()
     {
         $result = session('wa_result');
-        return view('wa-test', compact('result'));
+        $isScheduled = session('is_scheduled', false);
+        $scheduledTime = session('scheduled_time');
+        
+        return view('wa-test', compact('result'), [
+            'targetTime' => $this->targetTime,
+            'isScheduled' => $isScheduled,
+            'scheduledTime' => $scheduledTime
+        ]);
+    }
+    
+    public function checkSchedule()
+    {
+        $isScheduled = session('is_scheduled', false);
+        $scheduledTime = session('scheduled_time');
+        
+        if ($isScheduled && $scheduledTime) {
+            $now = Carbon::now('Asia/Jakarta');
+            $targetDateTime = Carbon::parse($scheduledTime);
+            
+            if ($now->gte($targetDateTime)) {
+                $result = $this->executeScheduledSend();
+                session()->forget(['is_scheduled', 'scheduled_time']);
+                return response()->json([
+                    'sent' => true, 
+                    'result' => $result,
+                    'message' => 'Pesan berhasil dikirim!'
+                ]);
+            }
+        }
+        
+        return response()->json(['sent' => false]);
     }
 
     public function sendTestMessage()
     {
-        // Set ke true untuk kirim pesan, false untuk skip
-        $sendMessage = true;
-
-        if (!$sendMessage) {
-            return response()->json([
-                'message' => 'Pengiriman pesan dimatikan (sendMessage = false)',
-                'phone' => $this->targetPhone,
-                'sent' => false
-            ]);
+        $now = Carbon::now('Asia/Jakarta');
+        $targetDateTime = Carbon::createFromFormat('H:i', $this->targetTime, 'Asia/Jakarta');
+        
+        if ($targetDateTime->isPast()) {
+            $targetDateTime->addDay();
         }
-
-        $formattedPhone = $this->formatPhoneNumber($this->targetPhone);
-        $message = 'tes bot whatsapp';
-
+        
+        // Simpan jadwal di session
+        session([
+            'is_scheduled' => true,
+            'scheduled_time' => $targetDateTime->toDateTimeString()
+        ]);
+        
+        return redirect()->route('wa-test')->with('status', 
+            "Pesan dijadwalkan untuk dikirim pada {$targetDateTime->format('d/m/Y H:i')} WIB. Refresh halaman saat waktunya tiba."
+        );
+    }
+    
+    private function executeScheduledSend()
+    {
+        $now = Carbon::now('Asia/Jakarta');
+        $message = 'Notifikasi terjadwal jam ' . $this->targetTime . ' - ' . $now->format('d/m/Y H:i');
+        
         try {
-            $response = Http::withHeaders([
-                'Authorization' => env('FONNTE_TOKEN')
-            ])->post('https://api.fonnte.com/send', [
-                'target' => $formattedPhone,
-                'message' => $message,
-                'countryCode' => '62'
-            ]);
-
-            $result = $response->json();
-
-            session(['wa_result' => [
-                'phone' => $formattedPhone,
-                'success' => $response->successful(),
-                'response' => $result
-            ]]);
-
-            return redirect('/wa-test');
+            $result = $this->whatsappService->sendBulkMessage($this->defaultPhones, $message);
+            session(['wa_result' => $result]);
+            return $result;
         } catch (\Exception $e) {
-            session(['wa_result' => [
-                'phone' => $formattedPhone,
-                'success' => false,
-                'error' => $e->getMessage()
-            ]]);
-
-            return redirect('/wa-test');
+            $errorResult = ['error' => $e->getMessage()];
+            session(['wa_result' => $errorResult]);
+            return $errorResult;
         }
     }
 
-    private function formatPhoneNumber($phone)
+    public function sendNotification($phones, $message)
     {
-        $phone = preg_replace('/[^0-9]/', '', $phone);
-
-        if (substr($phone, 0, 1) === '0') {
-            $phone = '62' . substr($phone, 1);
-        }
-
-        if (substr($phone, 0, 2) !== '62') {
-            $phone = '62' . $phone;
-        }
-
-        return $phone;
+        return $this->whatsappService->sendBulkMessage($phones, $message);
     }
 }
