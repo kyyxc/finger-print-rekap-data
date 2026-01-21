@@ -101,6 +101,7 @@ class UserController extends Controller
             ->orderBy('record_time', 'desc')
             ->get();
 
+
         // ===================================================
         // Tambahkan USER YANG BELUM HADIR (SINGLE DATE ONLY)
         // ===================================================
@@ -211,13 +212,13 @@ class UserController extends Controller
         foreach ($attendancesFromMachine as $att) {
             $userId = $att['user_id'];
             $timestamp = Carbon::parse($att['record_time']);
-
+            
             $role = $rolesMap[$userId] ?? null;
-
+            
             if ($role == 14 || (in_array($att['type'], [1, 5]) && $timestamp->hour < 13)) {
                 continue;
             }
-
+                
             if (!$localUsers->has($userId)) {
                 continue;
             }
@@ -239,6 +240,7 @@ class UserController extends Controller
                 'record_time' => $timestamp,
                 'status' => $status,
             ];
+
         }
 
         // Masukkan semua data baru dalam SATU KALI PERINTAH (Bulk Insert)

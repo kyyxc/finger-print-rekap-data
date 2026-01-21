@@ -7,6 +7,8 @@ use App\Models\Grade;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class SekretarisController extends Controller
 {
@@ -17,7 +19,91 @@ class SekretarisController extends Controller
         } catch (\Exception $e) {
             Log::error('Gagal sinkronisasi user: ' . $e->getMessage());
         }
-        return view('pages.sekretaris.dashboard');
+
+        // Get sekretaris's assigned grade
+        $sekretaris = auth()->guard('role')->user()->load('grade');
+        $grade = $sekretaris->grade;
+        $kelasName = $grade ? $grade->name : null;
+
+        // Statistics
+        $today = Carbon::today();
+
+        if ($kelasName) {
+            // Total students in the assigned class
+            $totalSiswa = User::where('kelas', $kelasName)->count();
+
+            // Today's attendance for this class
+            $todayAttendances = Attendance::whereHas('user', function ($q) use ($kelasName) {
+                $q->where('kelas', $kelasName);
+            })->whereDate('record_time', $today)->get();
+
+            $hadirHariIni = $todayAttendances->where('status', 'hadir')->count();
+            $sakitHariIni = $todayAttendances->where('status', 'sakit')->count();
+            $izinHariIni = $todayAttendances->where('status', 'izin')->count();
+            $alphaHariIni = $todayAttendances->where('status', 'alpha')->count();
+            $belumAbsen = $totalSiswa - $todayAttendances->count();
+
+            // Monthly attendance data for chart (current month)
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $endOfMonth = Carbon::now()->endOfMonth();
+
+            $monthlyData = Attendance::whereHas('user', function ($q) use ($kelasName) {
+                $q->where('kelas', $kelasName);
+            })
+                ->whereBetween('record_time', [$startOfMonth, $endOfMonth])
+                ->select(
+                    DB::raw('DATE(record_time) as date'),
+                    DB::raw("SUM(CASE WHEN status = 'hadir' THEN 1 ELSE 0 END) as hadir"),
+                    DB::raw("SUM(CASE WHEN status = 'sakit' THEN 1 ELSE 0 END) as sakit"),
+                    DB::raw("SUM(CASE WHEN status = 'izin' THEN 1 ELSE 0 END) as izin"),
+                    DB::raw("SUM(CASE WHEN status = 'alpha' THEN 1 ELSE 0 END) as alpha")
+                )
+                ->groupBy('date')
+                ->orderBy('date')
+                ->get();
+
+            // Format data for chart
+            $chartLabels = [];
+            $chartHadir = [];
+            $chartSakit = [];
+            $chartIzin = [];
+            $chartAlpha = [];
+
+            foreach ($monthlyData as $data) {
+                $chartLabels[] = Carbon::parse($data->date)->format('d M');
+                $chartHadir[] = (int) $data->hadir;
+                $chartSakit[] = (int) $data->sakit;
+                $chartIzin[] = (int) $data->izin;
+                $chartAlpha[] = (int) $data->alpha;
+            }
+        } else {
+            $totalSiswa = 0;
+            $hadirHariIni = 0;
+            $sakitHariIni = 0;
+            $izinHariIni = 0;
+            $alphaHariIni = 0;
+            $belumAbsen = 0;
+            $chartLabels = [];
+            $chartHadir = [];
+            $chartSakit = [];
+            $chartIzin = [];
+            $chartAlpha = [];
+        }
+
+        return view('pages.sekretaris.dashboard', compact(
+            'kelasName',
+            'totalSiswa',
+            'hadirHariIni',
+            'sakitHariIni',
+            'izinHariIni',
+            'alphaHariIni',
+            'belumAbsen',
+            'chartLabels',
+            'chartHadir',
+            'chartSakit',
+            'chartIzin',
+            'chartAlpha'
+        ));
     }
 
     public function users(Request $request)

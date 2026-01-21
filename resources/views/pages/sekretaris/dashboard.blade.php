@@ -8,6 +8,17 @@
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-800">Dashboard Sekretaris</h1>
             <p class="text-gray-500 mt-1">Selamat datang kembali, {{ auth()->guard('role')->user()->username }}!</p>
+            @if($kelasName)
+                <span class="inline-flex items-center px-3 py-1 mt-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    <span class="material-icons text-sm mr-1">school</span>
+                    Kelas: {{ $kelasName }}
+                </span>
+            @else
+                <span class="inline-flex items-center px-3 py-1 mt-2 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                    <span class="material-icons text-sm mr-1">warning</span>
+                    Belum ditugaskan ke kelas manapun
+                </span>
+            @endif
         </div>
 
         {{-- NOTIFIKASI --}}
@@ -33,6 +44,98 @@
                 </ul>
             </div>
         @endif
+
+        {{-- STATISTIK CARDS --}}
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            {{-- Total Siswa --}}
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500">Total Siswa</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ $totalSiswa }}</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <span class="material-icons text-blue-600">groups</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Hadir Hari Ini --}}
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500">Hadir Hari Ini</p>
+                        <p class="text-2xl font-bold text-green-600">{{ $hadirHariIni }}</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <span class="material-icons text-green-600">check_circle</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Sakit --}}
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500">Sakit</p>
+                        <p class="text-2xl font-bold text-yellow-600">{{ $sakitHariIni }}</p>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-full">
+                        <span class="material-icons text-yellow-600">local_hospital</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Izin --}}
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500">Izin</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ $izinHariIni }}</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <span class="material-icons text-blue-600">assignment</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Alpha --}}
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500">Alpha</p>
+                        <p class="text-2xl font-bold text-red-600">{{ $alphaHariIni }}</p>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <span class="material-icons text-red-600">cancel</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Belum Absen --}}
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500">Belum Absen</p>
+                        <p class="text-2xl font-bold text-gray-600">{{ $belumAbsen }}</p>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-full">
+                        <span class="material-icons text-gray-600">pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- GRAFIK KEHADIRAN BULANAN --}}
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <span class="material-icons text-blue-600">bar_chart</span>
+                Grafik Kehadiran Bulan {{ now()->translatedFormat('F Y') }}
+            </h2>
+            <div class="h-72">
+                <canvas id="monthlyAttendanceChart"></canvas>
+            </div>
+        </div>
 
         {{-- AKSI UTAMA --}}
         <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-6">
@@ -167,4 +270,87 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Data dari controller
+        const chartLabels = @json($chartLabels);
+        const chartHadir = @json($chartHadir);
+        const chartSakit = @json($chartSakit);
+        const chartIzin = @json($chartIzin);
+        const chartAlpha = @json($chartAlpha);
+
+        // Chart Kehadiran Bulanan
+        const ctx = document.getElementById('monthlyAttendanceChart').getContext('2d');
+        const monthlyAttendanceChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartLabels,
+                datasets: [
+                    {
+                        label: 'Hadir',
+                        data: chartHadir,
+                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                        borderColor: 'rgb(34, 197, 94)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Sakit',
+                        data: chartSakit,
+                        backgroundColor: 'rgba(234, 179, 8, 0.8)',
+                        borderColor: 'rgb(234, 179, 8)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Izin',
+                        data: chartIzin,
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Alpha',
+                        data: chartAlpha,
+                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                        borderColor: 'rgb(239, 68, 68)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+@endpush
 
