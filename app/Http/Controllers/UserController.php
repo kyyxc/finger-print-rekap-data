@@ -212,6 +212,7 @@ class UserController extends Controller
             $userId = $att['user_id'];
             $timestamp = Carbon::parse($att['record_time']);
 
+
             $role = $rolesMap[$userId] ?? null;
 
             if ($role == 14 || (in_array($att['type'], [1, 5]) && $timestamp->hour < 13)) {

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SekretarisController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppBotController;
@@ -49,6 +50,15 @@ Route::prefix('admin')->group(function () {
         Route::post('grades', [AdminController::class, 'createGrade'])->name('admin.grades.store');
         Route::patch('grades/{id}', [AdminController::class, 'updateGrade'])->name('admin.grades.update');
         Route::delete('grades/{id}', [AdminController::class, 'deleteGrade'])->name('admin.grades.destroy');
+
+        // Kelola Jadwal/Schedule
+        Route::get('schedules', [ScheduleController::class, 'index'])->name('admin.schedules');
+        Route::get('schedules/get', [ScheduleController::class, 'getSchedules'])->name('admin.schedules.get');
+        Route::post('schedules/toggle', [ScheduleController::class, 'toggle'])->name('admin.schedules.toggle');
+        Route::delete('schedules/{id}', [ScheduleController::class, 'destroy'])->name('admin.schedules.destroy');
+        Route::get('schedules/holidays', [ScheduleController::class, 'holidays'])->name('admin.schedules.holidays');
+        Route::get('schedules/defaults', [ScheduleController::class, 'getDefaults'])->name('admin.schedules.defaults');
+        Route::post('schedules/defaults', [ScheduleController::class, 'updateDefault'])->name('admin.schedules.defaults.update');
     });
 });
 

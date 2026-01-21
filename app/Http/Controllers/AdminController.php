@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Exports\AttendancesExport;
 use App\Imports\UserImport;
 use App\Models\Admin;
+use App\Models\Attendance;
 use App\Models\Grade;
 use App\Models\Role;
 use App\Models\User;
+use Carbon\Carbon;
 use CodingLibs\ZktecoPhp\Libs\ZKTeco;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -26,7 +29,148 @@ class AdminController extends Controller
         } catch (\Exception $e) {
             Log::error('Gagal sinkronisasi user: ' . $e->getMessage());
         }
-        return view('pages.admins.dashboard1');
+
+        $today = Carbon::today();
+
+        // Statistik
+        $totalUsers = User::count();
+        $totalGrades = Grade::count();
+
+        // Hitung kehadiran hari ini (user yang sudah absen minimal 1x hari ini)
+        $hadirHariIni = Attendance::whereDate('record_time', $today)
+            ->distinct('user_id')
+            ->count('user_id');
+
+        $belumHadir = $totalUsers - $hadirHariIni;
+
+        // Data kehadiran mingguan (7 hari terakhir, Senin-Minggu)
+        $startOfWeek = $today->copy()->startOfWeek(Carbon::MONDAY);
+        $weeklyData = $this->getWeeklyAttendanceData($startOfWeek);
+
+        // Data kelas untuk dropdown
+        $grades = Grade::orderBy('name')->get();
+
+        // Data kehadiran per kelas
+        $classData = $this->getClassAttendanceData($startOfWeek, $grades);
+
+        return view('pages.admins.dashboard', compact(
+            'totalUsers',
+            'totalGrades',
+            'hadirHariIni',
+            'belumHadir',
+            'weeklyData',
+            'grades',
+            'classData'
+        ));
+    }
+
+    /**
+     * Get weekly attendance data
+     */
+    private function getWeeklyAttendanceData($startOfWeek)
+    {
+        $labels = [];
+        $hadir = [];
+        $tidakHadir = [];
+        $dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+
+        $totalUsers = User::count();
+
+        for ($i = 0; $i < 7; $i++) {
+            $date = $startOfWeek->copy()->addDays($i);
+            $labels[] = $dayNames[$i];
+
+            // Skip hari yang belum terjadi
+            if ($date->isFuture()) {
+                $hadir[] = 0;
+                $tidakHadir[] = 0;
+                continue;
+            }
+
+            $hadirCount = Attendance::whereDate('record_time', $date)
+                ->distinct('user_id')
+                ->count('user_id');
+
+            $hadir[] = $hadirCount;
+            $tidakHadir[] = $totalUsers - $hadirCount;
+        }
+
+        return [
+            'labels' => $labels,
+            'hadir' => $hadir,
+            'tidakHadir' => $tidakHadir
+        ];
+    }
+
+    /**
+     * Get class attendance data
+     */
+    private function getClassAttendanceData($startOfWeek, $grades)
+    {
+        $classData = [];
+        $dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+
+        // Data untuk semua kelas
+        $totalUsers = User::count();
+        $allHadir = [];
+        $allTidakHadir = [];
+
+        for ($i = 0; $i < 7; $i++) {
+            $date = $startOfWeek->copy()->addDays($i);
+
+            if ($date->isFuture()) {
+                $allHadir[] = 0;
+                $allTidakHadir[] = 0;
+                continue;
+            }
+
+            $hadirCount = Attendance::whereDate('record_time', $date)
+                ->distinct('user_id')
+                ->count('user_id');
+
+            $allHadir[] = $hadirCount;
+            $allTidakHadir[] = $totalUsers - $hadirCount;
+        }
+
+        $classData['all'] = [
+            'hadir' => $allHadir,
+            'tidakHadir' => $allTidakHadir
+        ];
+
+        // Data per kelas
+        foreach ($grades as $grade) {
+            $gradeKey = str_replace(' ', '-', $grade->name);
+            $usersInGrade = User::where('kelas', $grade->name)->pluck('id');
+            $totalInGrade = $usersInGrade->count();
+
+            $gradeHadir = [];
+            $gradeTidakHadir = [];
+
+            for ($i = 0; $i < 7; $i++) {
+                $date = $startOfWeek->copy()->addDays($i);
+
+                if ($date->isFuture() || $totalInGrade == 0) {
+                    $gradeHadir[] = 0;
+                    $gradeTidakHadir[] = 0;
+                    continue;
+                }
+
+                $hadirCount = Attendance::whereDate('record_time', $date)
+                    ->whereIn('user_id', $usersInGrade)
+                    ->distinct('user_id')
+                    ->count('user_id');
+
+                $gradeHadir[] = $hadirCount;
+                $gradeTidakHadir[] = $totalInGrade - $hadirCount;
+            }
+
+            $classData[$gradeKey] = [
+                'hadir' => $gradeHadir,
+                'tidakHadir' => $gradeTidakHadir
+            ];
+        }
+
+        return $classData;
     }
 
     public function profile()
@@ -120,18 +264,37 @@ class AdminController extends Controller
             'nis' => 'required|string|max:50|unique:users,nis,' . $id,
             'nama' => 'required|string|max:255',
             'kelas' => 'nullable|string|max:100',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ], [
             'nis.required' => 'NIS wajib diisi.',
             'nis.unique' => 'NIS sudah digunakan.',
             'nama.required' => 'Nama wajib diisi.',
+            'photo.image' => 'File harus berupa gambar.',
+            'photo.mimes' => 'Format gambar harus jpeg, png, atau jpg.',
+            'photo.max' => 'Ukuran gambar maksimal 5MB.',
         ]);
 
         $user->nis = $request->nis;
         $user->nama = $request->nama;
         $user->kelas = $request->kelas;
+
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            // Delete old photo if exists
+            if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                Storage::disk('public')->delete($user->photo);
+            }
+
+            // Store new photo
+            $photo = $request->file('photo');
+            $filename = $user->nis . '.' . $photo->getClientOriginalExtension();
+            $path = $photo->storeAs('photos', $filename, 'public');
+            $user->photo = $path;
+        }
+
         $user->save();
 
-        return redirect()->route('admin.users')->with('message', '✅ Data siswa berhasil diperbarui.');
+        return redirect()->route('admin.users')->with('message', 'Data siswa berhasil diperbarui.');
     }
 
     public function destroy($id)

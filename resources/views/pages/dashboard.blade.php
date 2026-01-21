@@ -158,9 +158,9 @@
                                     <tr class="table-row-hover bg-white hover:bg-red-50/50 transition-all duration-200"
                                         data-search="{{ strtolower(($attendance->user->nis ?? '') . ' ' . ($attendance->user->nama ?? '') . ' ' . ($attendance->user->kelas ?? '')) }}">
                                         <td class="py-2 px-2 sm:py-4 sm:px-6">
-                                            <a href="{{ $attendance->user->photo_path ?? asset('default/default.jpg') }}"
+                                            <a href="{{ 'storage/'.$attendance->user->photo ?? asset('default/default.jpg') }}"
                                                 target="_blank" class="block">
-                                                <img src="{{ $attendance->user->photo_path ?? asset('default/default.jpg') }}"
+                                                <img src="{{ 'storage/'.$attendance->user->photo ?? asset('default/default.jpg') }}"
                                                     class="h-8 w-8 sm:h-11 sm:w-11 rounded-lg sm:rounded-xl object-cover ring-2 ring-gray-100 hover:ring-red-400 transition-all duration-200 shadow-sm"
                                                     alt="Foto">
                                             </a>
