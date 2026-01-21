@@ -200,11 +200,19 @@ class UserController extends Controller
         // 'nis' => UserModel,
         // 'nis' => UserModel,
         // ];
-        $existingAttendances = Attendance::whereDate('record_time', today())
-            ->get(['user_id', 'status'])
-            ->groupBy('user_id');
+
+        // Ambil semua tanggal unik dari attendance mesin
+        $uniqueDates = $attendancesFromMachine->map(fn($att) => Carbon::parse($att['record_time'])->toDateString())->unique()->toArray();
+
+        // Ambil existing attendances untuk semua tanggal yang relevan, grouped by date dan user_id
+        $existingAttendances = Attendance::whereIn(\DB::raw('DATE(record_time)'), $uniqueDates)
+            ->get(['user_id', 'status', 'record_time'])
+            ->groupBy(function ($item) {
+                return Carbon::parse($item->record_time)->toDateString() . '_' . $item->user_id;
+            });
         // hasil = [
-        //   user_id => [attendance1, attendance2, ...],
+        //   '2025-01-21_1' => [attendance1, attendance2, ...],
+        //   '2025-01-21_2' => [attendance1, attendance2, ...],
         //   ...
         // ]
 
@@ -252,14 +260,19 @@ class UserController extends Controller
             $jamPulang = $workingHours['jam_pulang'] ?? '16:00';
 
             // ============================================
-            // CEK STATUS ATTENDANCE USER HARI INI
+            // CEK STATUS ATTENDANCE USER PADA TANGGAL INI
             // ============================================
-            $userAttendances = $existingAttendances->get($user->id, collect());
+            $attendanceKey = $dateString . '_' . $user->id;
+            $userAttendances = $existingAttendances->get($attendanceKey, collect());
             $hasCheckedIn = $userAttendances->whereIn('status', ['masuk', 'telat'])->isNotEmpty();
             $hasCheckedOut = $userAttendances->where('status', 'pulang')->isNotEmpty();
 
-            // Juga cek dari $attendancesToInsert yang baru ditambahkan
-            $pendingAttendances = collect($attendancesToInsert)->where('user_id', $user->id);
+            // Juga cek dari $attendancesToInsert yang baru ditambahkan (untuk tanggal yang sama)
+            $pendingAttendances = collect($attendancesToInsert)
+                ->filter(function ($item) use ($user, $dateString) {
+                    return $item['user_id'] == $user->id
+                        && Carbon::parse($item['record_time'])->toDateString() == $dateString;
+                });
             $pendingCheckedIn = $pendingAttendances->whereIn('status', ['masuk', 'telat'])->isNotEmpty();
             $pendingCheckedOut = $pendingAttendances->where('status', 'pulang')->isNotEmpty();
 
@@ -300,13 +313,8 @@ class UserController extends Controller
                 }
             } elseif ($hasCheckedIn && !$hasCheckedOut) {
                 // Sudah absen masuk, belum absen pulang
-                // Cek apakah sudah waktunya pulang
-                if ($currentTime >= $jamPulang) {
-                    $status = 'pulang';
-                } else {
-                    // Masih sebelum jam pulang, skip (continue)
-                    continue;
-                }
+                // Izinkan absen pulang kapan saja setelah absen masuk
+                $status = 'pulang';
             } else {
                 // Sudah absen masuk DAN sudah absen pulang, skip
                 continue;
@@ -330,7 +338,7 @@ class UserController extends Controller
         }
 
         // Hapus data dari mesin setelah diambil
-        $zk->clearAttendance();
+        // $zk->clearAttendance();
         $zk->disconnect();
     }
 }
