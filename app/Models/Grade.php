@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Grade extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'phone_no'];
 
     /**
      * Get the users (students) that belong to this grade/class.

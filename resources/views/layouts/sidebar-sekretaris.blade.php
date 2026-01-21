@@ -46,6 +46,15 @@
                 </button>
             </div>
 
+            {{-- LIHAT ABSENSI BUTTON --}}
+            <div class="px-4 pt-4">
+                <a href="{{ route('dashboard', ['search' => '', 'tanggal' => now()->toDateString(), 'status' => '', 'show_incomplete' => 1]) }}"
+                    class="flex items-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-white font-medium">
+                    <span class="material-icons text-xl">visibility</span>
+                    <span>Lihat Absensi</span>
+                </a>
+            </div>
+
             {{-- NAVIGATION --}}
             <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
                 <a href="{{ route('sekretaris.dashboard') }}"
@@ -64,12 +73,6 @@
                     class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('sekretaris.kelola-absen') ? 'bg-blue-600 text-white' : 'hover:bg-slate-700 text-slate-300' }}">
                     <span class="material-icons text-xl">edit_calendar</span>
                     <span class="font-medium">Kelola Absen Kelas</span>
-                </a>
-
-                <a href="{{ route('sekretaris.absensi') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('sekretaris.absensi') ? 'bg-blue-600 text-white' : 'hover:bg-slate-700 text-slate-300' }}">
-                    <span class="material-icons text-xl">analytics</span>
-                    <span class="font-medium">Dashboard Absensi</span>
                 </a>
             </nav>
 

@@ -154,11 +154,6 @@
                     <span class="material-icons text-xl">groups</span>
                     Data Siswa
                 </a>
-                <a href="{{ route('sekretaris.absensi') }}"
-                    class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors shadow-sm">
-                    <span class="material-icons text-xl">analytics</span>
-                    Dashboard Absensi
-                </a>
             </div>
         </div>
 

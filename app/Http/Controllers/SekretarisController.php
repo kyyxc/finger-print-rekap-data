@@ -109,9 +109,18 @@ class SekretarisController extends Controller
     public function users(Request $request)
     {
         $perPage = $request->get('per_page', 10);
-        $users = User::orderBy('nama', 'asc')->paginate($perPage);
         
-        return view('pages.sekretaris.users', compact('users', 'perPage'));
+        // Get sekretaris's assigned grade
+        $sekretaris = auth()->guard('role')->user()->load('grade');
+        $grade = $sekretaris->grade;
+        $kelasName = $grade ? $grade->name : null;
+
+        // Filter users by sekretaris's class only
+        $users = User::when($kelasName, function ($query) use ($kelasName) {
+            return $query->where('kelas', $kelasName);
+        })->orderBy('nama', 'asc')->paginate($perPage);
+        
+        return view('pages.sekretaris.users', compact('users', 'perPage', 'kelasName'));
     }
 
     public function absensi()

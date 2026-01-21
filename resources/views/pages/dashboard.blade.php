@@ -73,7 +73,10 @@
 
                         @auth('role')
                             <!-- Back -->
-                            <a href="{{ route('admin.dashboard') }}"
+                            @php
+                                $dashboardRoute = auth()->guard('role')->user()->role === 'admin' ? route('admin.dashboard') : route('sekretaris.dashboard');
+                            @endphp
+                            <a href="{{ $dashboardRoute }}"
                                 class="bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 active:scale-[.98] transition flex items-center gap-1.5 sm:gap-2 shadow-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -158,9 +161,12 @@
                                     <tr class="table-row-hover bg-white hover:bg-red-50/50 transition-all duration-200"
                                         data-search="{{ strtolower(($attendance->user->nis ?? '') . ' ' . ($attendance->user->nama ?? '') . ' ' . ($attendance->user->kelas ?? '')) }}">
                                         <td class="py-2 px-2 sm:py-4 sm:px-6">
-                                            <a href="{{ 'storage/'.$attendance->user->photo ?? asset('default/default.jpg') }}"
+                                            @php
+                                                $photoUrl = $attendance->user->photo ? asset('storage/'.$attendance->user->photo) : asset('static/img/default.jpg');
+                                            @endphp
+                                            <a href="{{ $photoUrl }}"
                                                 target="_blank" class="block">
-                                                <img src="{{ 'storage/'.$attendance->user->photo ?? asset('default/default.jpg') }}"
+                                                <img src="{{ $photoUrl }}"
                                                     class="h-8 w-8 sm:h-11 sm:w-11 rounded-lg sm:rounded-xl object-cover ring-2 ring-gray-100 hover:ring-red-400 transition-all duration-200 shadow-sm"
                                                     alt="Foto">
                                             </a>
