@@ -242,7 +242,6 @@ class UserController extends Controller
             $dayOfWeek = $timestamp->dayOfWeek; // 0=Minggu, 1=Senin, ..., 6=Sabtu
             $defaultSchedule = DefaultSchedule::getByDayOfWeek($dayOfWeek);
             if ($defaultSchedule && $defaultSchedule->is_holiday) {
-                dd("here");
                 continue; // Skip jika hari libur default
             }
 
