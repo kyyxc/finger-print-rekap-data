@@ -65,11 +65,10 @@ Route::prefix('admin')->group(function () {
 Route::prefix('sekretaris')->group(function () {
     Route::middleware(['auth.admin'])->group(function () {
         Route::get('dashboard', [SekretarisController::class, 'dashboard'])->name('sekretaris.dashboard');
-
-        // Route::post('sync-users', [AdminController::class, 'syncUsers'])->name('admins.users.sync');
-        // Route::get('users', [AdminController::class, 'users'])->name('admins.users');
-        // Route::delete('users/{id}', [AdminController::class, 'destroy'])->name('admins.users.destroy');
-        // Route::get('export-attendances', [AdminController::class, 'exportAttendances'])->name('admins.attendances.export');
-        // Route::post('change-password', [AdminController::class, 'changePassword'])->name('admins.change-password');
+        Route::get('users', [SekretarisController::class, 'users'])->name('sekretaris.users');
+        Route::get('absensi', [SekretarisController::class, 'absensi'])->name('sekretaris.absensi');
+        Route::get('kelola-absen', [SekretarisController::class, 'kelolaAbsen'])->name('sekretaris.kelola-absen');
+        Route::post('kelola-absen', [SekretarisController::class, 'updateAbsen'])->name('sekretaris.kelola-absen.update');
+        Route::delete('kelola-absen/{id}', [SekretarisController::class, 'deleteAbsen'])->name('sekretaris.kelola-absen.delete');
     });
 });
