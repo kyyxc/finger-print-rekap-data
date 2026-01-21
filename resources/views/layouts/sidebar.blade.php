@@ -46,6 +46,15 @@
                 </button>
             </div>
 
+            {{-- BACK TO ABSENSI BUTTON --}}
+            <div class="px-4 pt-4">
+                <a href="{{ route('dashboard', ['search' => '', 'tanggal' => now()->toDateString(), 'status' => '', 'show_incomplete' => 1]) }}"
+                    class="flex items-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-white font-medium">
+                    <span class="material-icons text-xl">arrow_back</span>
+                    <span>Lihat Absensi</span>
+                </a>
+            </div>
+
             {{-- NAVIGATION --}}
             <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
                 <a href="{{ route('admin.dashboard') }}"
@@ -57,7 +66,7 @@
                 <a href="{{ route('admin.users') }}"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('admin.users') ? 'bg-blue-600 text-white' : 'hover:bg-slate-700 text-slate-300' }}">
                     <span class="material-icons text-xl">groups</span>
-                    <span class="font-medium">Users</span>
+                    <span class="font-medium">Data Siswa</span>
                 </a>
 
                 <a href="{{ route('admin.profile') }}"
@@ -90,9 +99,9 @@
                     <span class="font-medium">Kelola Kelas</span>
                 </a>
 
-                {{-- KELOLA KELAS --}}
-                <a href="{{ route('admin.grades') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('admin.date') ? 'bg-blue-600 text-white' : 'hover:bg-slate-700 text-slate-300' }}">
+                {{-- KELOLA JADWAL --}}
+                <a href="{{ route('admin.schedules') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors {{ request()->routeIs('admin.schedules') ? 'bg-blue-600 text-white' : 'hover:bg-slate-700 text-slate-300' }}">
                     <span class="material-icons text-xl">date_range</span>
                     <span class="font-medium">Kelola Jadwal</span>
                 </a>

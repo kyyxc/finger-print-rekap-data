@@ -1,237 +1,287 @@
-@extends('layouts.main')
+@extends('layouts.sidebar')
 
 @section('title', 'Dashboard Admin')
 
 @section('content')
-    <div class="min-h-screen bg-gray-100 p-6">
-        <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl p-6 space-y-6">
-
-            {{-- HEADER --}}
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-800">Halaman Admin</h2>
-                    <p class="text-sm text-gray-500">Selamat datang, {{ auth()->guard('role')->user()->username }}!</p>
-                </div>
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit"
-                        class="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
-                        Logout
-                    </button>
-                </form>
-            </div>
-
-            {{-- NOTIFIKASI --}}
-            @if (session('message'))
-                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md" role="alert">
-                    <p>{{ session('message') }}</p>
-                </div>
-            @endif
-
-            {{-- MENAMPILKAN SEMUA ERROR DI ATAS (OPSIONAL, JIKA MODAL ERROR TIDAK CUKUP) --}}
-            @if ($errors->any())
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
-                    <p class="font-bold">Terjadi Kesalahan</p>
-                    <ul class="mt-2 list-disc list-inside text-sm">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-
-            {{-- AKSI UTAMA --}}
-            <div>
-                <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Aksi Utama</h3>
-                <div class="flex gap-4 flex-wrap">
-                    <button onclick="document.getElementById('modal-import').classList.remove('hidden')"
-                        class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-semibold">
-                        Import Siswa (Excel)
-                    </button>
-                    <button onclick="document.getElementById('modal-import-zip').classList.remove('hidden')"
-                        class="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg font-semibold">
-                        Import Foto (ZIP)
-                    </button>
-                    <a href="{{ route('dashboard', ['search' => '', 'tanggal' => now()->toDateString(), 'status' => '', 'show_incomplete' => 1]) }}"
-                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold">
-                        Dashboard Absensi
-                    </a>
-                    <a href="{{ route('admin.users') }}"
-                        class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold">
-                        Data Users
-                    </a>
-                </div>
-            </div>
-
-            {{-- MANAJEMEN ADMIN --}}
-            <div>
-                <h3 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Manajemen Akun</h3>
-                <div class="flex gap-4 flex-wrap">
-                    <button onclick="document.getElementById('modal-change-password').classList.remove('hidden')"
-                        class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-semibold">
-                        Ganti Password
-                    </button>
-                    <button onclick="document.getElementById('modal-create-admin').classList.remove('hidden')"
-                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold">
-                        Buat Admin Baru
-                    </button>
-                    <button onclick="document.getElementById('modal-delete-account').classList.remove('hidden')"
-                        class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-lg font-semibold">
-                        Hapus Akun Saya
-                    </button>
-                </div>
-            </div>
-
+    <div class="max-w-7xl mx-auto">
+        {{-- HEADER --}}
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
+            <p class="text-gray-500 mt-1">Selamat datang kembali, {{ auth()->guard('role')->user()->username }}!</p>
         </div>
 
-        <div id="modal-import" class="fixed inset-0 bg-opacity-50 flex items-center justify-center hidden z-50">
-            <div class="bg-white p-6 rounded-xl max-w-md w-full relative border">
-                <h3 class="text-xl font-semibold mb-4">Import Siswa dari Excel</h3>
+        {{-- NOTIFIKASI --}}
+        @if (session('message'))
+            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-6" role="alert">
+                <p>{{ session('message') }}</p>
+            </div>
+        @endif
 
-                <div class="mb-4">
-                    <p class="text-sm text-gray-600 mb-1">Template Format Import Excel</p>
-                    <a href="{{ asset('default/Template User Import.csv') }}" download
-                        class="text-blue-600 underline hover:text-blue-800">
-                        Unduh Contoh Format Excel
-                    </a>
+        @if ($errors->any())
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6" role="alert">
+                <p class="font-bold">Terjadi Kesalahan</p>
+                <ul class="mt-2 list-disc list-inside text-sm">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        {{-- STATISTIK CARDS --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Total Siswa</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ number_format($totalUsers) }}</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
                 </div>
+            </div>
 
-                <form action="{{ route('admin.users.import') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <input type="file" name="excel_file" accept=".xlsx,.xls, .csv" required
-                        class="w-full border p-2 rounded mb-4">
-                    <div class="flex justify-end gap-2">
-                        <button type="button" onclick="document.getElementById('modal-import').classList.add('hidden')"
-                            class="bg-gray-300 px-4 py-2 rounded-xl hover:bg-gray-400">
-                            Batal
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Hadir Hari Ini</p>
+                        <p class="text-2xl font-bold text-green-600">{{ number_format($hadirHariIni) }}</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Belum Hadir</p>
+                        <p class="text-2xl font-bold text-red-600">{{ number_format($belumHadir) }}</p>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Total Kelas</p>
+                        <p class="text-2xl font-bold text-purple-600">{{ number_format($totalGrades) }}</p>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- GRAFIK SECTION --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {{-- Grafik Total Kehadiran --}}
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Total Kehadiran Minggu Ini</h2>
+                <div class="h-64">
+                    <canvas id="totalAttendanceChart"></canvas>
+                </div>
+            </div>
+
+            {{-- Grafik Kehadiran Per Kelas --}}
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">Kehadiran Per Kelas</h2>
+                    <div class="relative">
+                        <button id="classDropdownBtn" type="button"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors">
+                            <span id="selectedClassName">Semua Kelas</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
                         </button>
-                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600">
-                            Import
-                        </button>
+                        {{-- Dropdown Menu --}}
+                        <div id="classDropdownMenu"
+                            class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                            <div class="max-h-48 overflow-y-auto">
+                                <button type="button" data-class="all" data-name="Semua Kelas"
+                                    class="class-option w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 first:rounded-t-lg">
+                                    Semua Kelas
+                                </button>
+                                @foreach($grades as $grade)
+                                <button type="button" data-class="{{ str_replace(' ', '-', $grade->name) }}" data-name="{{ $grade->name }}"
+                                    class="class-option w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 last:rounded-b-lg">
+                                    {{ $grade->name }}
+                                </button>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
-                </form>
+                </div>
+                <div class="h-64">
+                    <canvas id="classAttendanceChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <div id="modal-import-zip" class="fixed inset-0 bg-opacity-50 flex items-center justify-center hidden z-50">
-            <div class="bg-white p-6 rounded-xl max-w-md w-full relative border">
-                <h3 class="text-xl font-semibold mb-4">Import Foto Siswa (ZIP)</h3>
-                <p class="text-sm text-gray-600 mb-2">
-                    Hanya format <strong>jpg, jpeg, png</strong> dengan ukuran maksimal <strong>5MB</strong> per file.
-                    Nama file harus <strong>sesuai NIK</strong> siswa. Contoh: <code>12288901.jpg</code>
-                </p>
-                <form action="{{ route('admin.users.import.photos') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <input type="file" name="zip_file" accept=".zip" required class="w-full border p-2 rounded mb-4">
-                    <div class="flex justify-end gap-2">
-                        <button type="button" onclick="document.getElementById('modal-import-zip').classList.add('hidden')"
-                            class="bg-gray-300 px-4 py-2 rounded-xl hover:bg-gray-400">
-                            Batal
-                        </button>
-                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600">
-                            Upload
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="modal-change-password" class="fixed inset-0 flex items-center justify-center hidden z-50 p-4">
-            <div class="bg-white p-6 rounded-xl shadow-lg max-w-md w-full relative border">
-                <h3 class="text-xl font-semibold mb-4">Ganti Password Anda</h3>
-                <form action="{{ route('admin.change-password') }}" method="POST" class="space-y-4">
-                    @csrf
-                    <div>
-                        <label for="current_password" class="block text-sm font-medium text-gray-700">Password Saat
-                            Ini</label>
-                        <input type="password" name="current_password" id="current_password" required
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                        @error('current_password', 'changePassword')<span
-                        class="text-red-500 text-xs">{{ $message }}</span>@enderror
-                    </div>
-                    <div>
-                        <label for="new_password" class="block text-sm font-medium text-gray-700">Password Baru</label>
-                        <input type="password" name="new_password" id="new_password" required
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                        @error('new_password', 'changePassword')<span
-                        class="text-red-500 text-xs">{{ $message }}</span>@enderror
-                    </div>
-                    <div>
-                        <label for="new_password_confirmation" class="block text-sm font-medium text-gray-700">Konfirmasi
-                            Password Baru</label>
-                        <input type="password" name="new_password_confirmation" id="new_password_confirmation" required
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    </div>
-                    <div class="flex justify-end gap-2 pt-4">
-                        <button type="button"
-                            onclick="document.getElementById('modal-change-password').classList.add('hidden')"
-                            class="bg-gray-300 px-4 py-2 rounded-lg hover:bg-gray-400">Batal</button>
-                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Simpan
-                            Perubahan</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="modal-create-admin" class="fixed inset-0 flex items-center justify-center hidden z-50 p-4">
-            <div class="bg-white p-6 rounded-xl shadow-lg max-w-md w-full relative border">
-                <h3 class="text-xl font-semibold mb-4">Buat Admin Baru</h3>
-                <form action="{{ route('admin.create') }}" method="POST" class="space-y-4">
-                    @csrf
-                    <div>
-                        <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-                        <input type="text" name="username" id="username" value="{{ old('username') }}" required
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                        @error('username', 'createAdmin')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
-                    </div>
-                    <div>
-                        <label for="password_create" class="block text-sm font-medium text-gray-700">Password</label>
-                        <input type="password" name="password" id="password_create" required
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                        @error('password', 'createAdmin')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
-                    </div>
-                    <div>
-                        <label for="password_confirmation_create" class="block text-sm font-medium text-gray-700">Konfirmasi
-                            Password</label>
-                        <input type="password" name="password_confirmation" id="password_confirmation_create" required
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    </div>
-                    <div class="flex justify-end gap-2 pt-4">
-                        <button type="button"
-                            onclick="document.getElementById('modal-create-admin').classList.add('hidden')"
-                            class="bg-gray-300 px-4 py-2 rounded-lg hover:bg-gray-400">Batal</button>
-                        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Buat
-                            Admin</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="modal-delete-account" class="fixed inset-0 flex items-center justify-center hidden z-50 p-4">
-            <div class="bg-white p-6 rounded-xl shadow-lg max-w-md w-full relative border">
-                <h3 class="text-xl font-bold text-red-600 mb-2">Hapus Akun Permanen</h3>
-                <p class="text-sm text-gray-600 mb-4">Aksi ini tidak dapat dibatalkan. Untuk melanjutkan, masukkan password
-                    Anda saat ini.</p>
-                <form action="{{ route('admin.delete') }}" method="POST" class="space-y-4">
-                    @csrf
-                    @method('DELETE')
-                    <div>
-                        <label for="password_delete" class="block text-sm font-medium text-gray-700">Masukkan Password
-                            Anda</label>
-                        <input type="password" name="password" id="password_delete" required
-                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                        @error('password', 'deleteAccount')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="flex justify-end gap-2 pt-4">
-                        <button type="button"
-                            onclick="document.getElementById('modal-delete-account').classList.add('hidden')"
-                            class="bg-gray-300 px-4 py-2 rounded-lg hover:bg-gray-400">Batal</button>
-                        <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Saya
-                            Mengerti, Hapus Akun</button>
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
+
 @endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Data dari controller
+        const weeklyData = @json($weeklyData);
+        const classData = @json($classData);
+
+        // Chart Total Kehadiran
+        const totalCtx = document.getElementById('totalAttendanceChart').getContext('2d');
+        const totalAttendanceChart = new Chart(totalCtx, {
+            type: 'bar',
+            data: {
+                labels: weeklyData.labels,
+                datasets: [
+                    {
+                        label: 'Hadir',
+                        data: weeklyData.hadir,
+                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                        borderColor: 'rgb(34, 197, 94)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Tidak Hadir',
+                        data: weeklyData.tidakHadir,
+                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                        borderColor: 'rgb(239, 68, 68)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Chart Kehadiran Per Kelas
+        const classCtx = document.getElementById('classAttendanceChart').getContext('2d');
+        let classAttendanceChart = new Chart(classCtx, {
+            type: 'line',
+            data: {
+                labels: weeklyData.labels,
+                datasets: [
+                    {
+                        label: 'Hadir',
+                        data: classData['all'].hadir,
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Tidak Hadir',
+                        data: classData['all'].tidakHadir,
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Dropdown functionality
+        const dropdownBtn = document.getElementById('classDropdownBtn');
+        const dropdownMenu = document.getElementById('classDropdownMenu');
+        const selectedClassName = document.getElementById('selectedClassName');
+        const classOptions = document.querySelectorAll('.class-option');
+
+        // Toggle dropdown
+        dropdownBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function() {
+            dropdownMenu.classList.add('hidden');
+        });
+
+        // Handle class selection
+        classOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const classId = this.dataset.class;
+                const className = this.dataset.name;
+
+                selectedClassName.textContent = className;
+                dropdownMenu.classList.add('hidden');
+
+                // Update chart data
+                if (classData[classId]) {
+                    classAttendanceChart.data.datasets[0].data = classData[classId].hadir;
+                    classAttendanceChart.data.datasets[1].data = classData[classId].tidakHadir;
+                    classAttendanceChart.update();
+                }
+            });
+        });
+    </script>
+@endpush

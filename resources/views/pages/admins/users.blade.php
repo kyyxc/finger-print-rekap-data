@@ -27,6 +27,18 @@
                 <h1 class="text-3xl font-bold text-gray-800">Data Siswa</h1>
                 <p class="text-gray-500 mt-1">Manajemen data siswa sistem</p>
             </div>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="document.getElementById('modal-import').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium transition-colors text-sm">
+                    <span class="material-icons text-lg">upload_file</span>
+                    Import Siswa
+                </button>
+                <button onclick="document.getElementById('modal-import-zip').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg font-medium transition-colors text-sm">
+                    <span class="material-icons text-lg">photo_library</span>
+                    Import Foto
+                </button>
+            </div>
         </div>
 
         {{-- NOTIFIKASI --}}
@@ -127,7 +139,7 @@
                                     </td>
                                     <td class="py-4 px-6 text-center">
                                         <div class="flex items-center justify-center gap-1">
-                                            <button type="button" onclick="openEditModal({{ $user->id }}, '{{ $user->nis }}', '{{ addslashes($user->nama ?? '') }}', '{{ addslashes($user->kelas ?? '') }}')"
+                                            <button type="button" onclick="openEditModal({{ $user->id }}, '{{ $user->nis }}', '{{ addslashes($user->nama ?? '') }}', '{{ addslashes($user->kelas ?? '') }}', '{{ $user->photo ? asset('storage/' . $user->photo) : asset('static/img/default.jpg') }}')"
                                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 hover:text-emerald-800 transition-colors cursor-pointer" title="Edit">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                                                     stroke="currentColor" stroke-width="2">
@@ -262,9 +274,24 @@
     <div id="modal-edit-user" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-white p-6 rounded-xl shadow-xl max-w-md w-full relative">
             <h3 class="text-xl font-semibold mb-4">Edit Data Siswa</h3>
-            <form id="editUserForm" method="POST" class="space-y-4">
+            <form id="editUserForm" method="POST" enctype="multipart/form-data" class="space-y-4">
                 @csrf
                 @method('PATCH')
+
+                {{-- Photo Preview & Upload --}}
+                <div class="flex flex-col items-center mb-4">
+                    <div class="relative">
+                        <img id="edit_photo_preview" src="{{ asset('static/img/default-avatar.png') }}"
+                            alt="Preview Foto"
+                            class="w-24 h-24 rounded-full object-cover border-4 border-gray-200">
+                        <label for="edit_photo" class="absolute bottom-0 right-0 bg-emerald-600 text-white p-2 rounded-full cursor-pointer hover:bg-emerald-700 transition-colors">
+                            <span class="material-icons text-sm">camera_alt</span>
+                        </label>
+                    </div>
+                    <input type="file" name="photo" id="edit_photo" accept="image/*" class="hidden" onchange="previewPhoto(this)">
+                    <p class="text-xs text-gray-500 mt-2">Klik ikon kamera untuk ubah foto</p>
+                </div>
+
                 <div>
                     <label for="edit_nis" class="block text-sm font-medium text-gray-700">NIS</label>
                     <input type="text" name="nis" id="edit_nis" required
@@ -279,9 +306,13 @@
                 </div>
                 <div>
                     <label for="edit_kelas" class="block text-sm font-medium text-gray-700">Kelas</label>
-                    <input type="text" name="kelas" id="edit_kelas"
-                        placeholder="Masukkan kelas"
+                    <select name="kelas" id="edit_kelas"
                         class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="">-- Pilih Kelas --</option>
+                        @foreach($grades as $grade)
+                            <option value="{{ $grade->name }}">{{ $grade->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="flex justify-end gap-2 pt-4">
                     <button type="button"
@@ -319,6 +350,60 @@
                     <button type="submit"
                         class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors cursor-pointer">
                         Ya, Hapus
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- MODAL IMPORT SISWA --}}
+    <div id="modal-import" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-xl max-w-md w-full relative shadow-xl mx-4">
+            <h3 class="text-xl font-semibold mb-4">Import Siswa dari Excel</h3>
+
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 mb-1">Template Format Import Excel</p>
+                <a href="{{ asset('default/Template User Import.csv') }}" download
+                    class="text-blue-600 underline hover:text-blue-800">
+                    Unduh Contoh Format Excel
+                </a>
+            </div>
+
+            <form action="{{ route('admin.users.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <input type="file" name="excel_file" accept=".xlsx,.xls, .csv" required
+                    class="w-full border p-2 rounded mb-4">
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="document.getElementById('modal-import').classList.add('hidden')"
+                        class="bg-gray-300 px-4 py-2 rounded-xl hover:bg-gray-400">
+                        Batal
+                    </button>
+                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600">
+                        Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- MODAL IMPORT FOTO ZIP --}}
+    <div id="modal-import-zip" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-xl max-w-md w-full relative shadow-xl mx-4">
+            <h3 class="text-xl font-semibold mb-4">Import Foto Siswa (ZIP)</h3>
+            <p class="text-sm text-gray-600 mb-2">
+                Hanya format <strong>jpg, jpeg, png</strong> dengan ukuran maksimal <strong>5MB</strong> per file.
+                Nama file harus <strong>sesuai NIK</strong> siswa. Contoh: <code>12288901.jpg</code>
+            </p>
+            <form action="{{ route('admin.users.import.photos') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <input type="file" name="zip_file" accept=".zip" required class="w-full border p-2 rounded mb-4">
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="document.getElementById('modal-import-zip').classList.add('hidden')"
+                        class="bg-gray-300 px-4 py-2 rounded-xl hover:bg-gray-400">
+                        Batal
+                    </button>
+                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600">
+                        Upload
                     </button>
                 </div>
             </form>
@@ -377,12 +462,25 @@
         });
 
         // Open edit modal
-        function openEditModal(id, nis, nama, kelas) {
+        function openEditModal(id, nis, nama, kelas, photoUrl) {
             document.getElementById('edit_nis').value = nis;
             document.getElementById('edit_nama').value = nama;
-            document.getElementById('edit_kelas').value = kelas;
+            document.getElementById('edit_kelas').value = kelas || '';
+            document.getElementById('edit_photo_preview').src = photoUrl || '{{ asset("static/img/default-avatar.png") }}';
+            document.getElementById('edit_photo').value = ''; // Reset file input
             document.getElementById('editUserForm').action = '{{ url("admin/users") }}/' + id;
             document.getElementById('modal-edit-user').classList.remove('hidden');
+        }
+
+        // Preview photo before upload
+        function previewPhoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('edit_photo_preview').src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
         }
 
         // Confirm delete user
