@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [UserController::class, 'dashboard'])->name('dashboard');
 Route::get('/wa-test', [WhatsAppBotController::class, 'testPage'])->name('wa-test');
+Route::get('/wa-check', [WhatsAppBotController::class, 'checkSchedule'])->name('wa-check');
 
 // WhatsApp Bot Routes
 Route::post('/whatsapp-bot/send-test', [WhatsAppBotController::class, 'sendTestMessage']);

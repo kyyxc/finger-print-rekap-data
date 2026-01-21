@@ -39,4 +39,8 @@ return [
         'ip' => env('IP_ZKTECO')
     ],
 
+    'fonnte' => [
+        'token' => env('FONNTE_TOKEN'),
+    ],
+
 ];
