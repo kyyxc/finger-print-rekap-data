@@ -9,12 +9,13 @@ use Carbon\Carbon;
 class WhatsAppBotController extends Controller
 {
     private $whatsappService;
-    private $targetTime = '14:21'; // Ubah disini untuk ganti jadwal
+    private $targetTime = '14:57'; // Ubah disini untuk ganti jadwal
 
     private $defaultPhones = [
         '081958749289',
         '085798549635',
         '083808087144',
+        // '085860090810'
     ];
 
     public function __construct(WhatsAppService $whatsappService)
@@ -81,7 +82,7 @@ class WhatsAppBotController extends Controller
     private function executeScheduledSend()
     {
         $now = Carbon::now('Asia/Jakarta');
-        $message = 'Notifikasi terjadwal jam ' . $this->targetTime . ' - ' . $now->format('d/m/Y H:i');
+        $message = 'Ananda telah hadir pada pukul ' . $this->targetTime . ' - ' . $now->format('d/m/Y H:i');
         
         try {
             $result = $this->whatsappService->sendBulkMessage($this->defaultPhones, $message);
