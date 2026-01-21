@@ -14,41 +14,22 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Seed kelas terlebih dahulu
+        $this->call(GradeSeeder::class);
 
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        // Seed siswa
+        $this->call(UserSeeder::class);
 
-        // Seed default grades/classes
-        $grades = [
-            'X PPLG 1', 'X PPLG 2',
-            'XI RPL 1', 'XI RPl 2',
-            'XII RPL 1', 'XII RPL 2',
-            'X TJKT 1', 'X TJKT 2',
-            'XI TKJ 1', 'XI TKJ 2',
-            'XII TKJ 1', 'XII TKJ 2',
-        ];
+        // Create default admin
+        Role::firstOrCreate(
+            ['username' => config('app.admin_username', 'admin')],
+            [
+                'password' => bcrypt(config('app.admin_password', 'admin123')),
+                'role' => 'admin',
+            ]
+        );
 
-        foreach ($grades as $gradeName) {
-            Grade::firstOrCreate(['name' => $gradeName]);
-        }
-
-        // Get first grade for sekretaris
-        $firstGrade = Grade::first();
-
-        Role::create([
-            'username' => config('app.admin_username'),
-            'password' => bcrypt(config('app.admin_password')),
-            'role' => 'admin',
-        ]);
-
-        Role::create([
-            'username' => config('app.sekretaris_username'),
-            'password' => bcrypt(config('app.sekretaris_password')),
-            'role' => 'sekretaris',
-            'grade_id' => $firstGrade?->id,
-        ]);
+        // Seed sekretaris untuk setiap kelas
+        $this->call(SekretarisSeeder::class);
     }
 }

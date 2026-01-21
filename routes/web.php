@@ -19,7 +19,7 @@ Route::post('login', [AuthController::class, 'postLogin'])->name('authenticate')
 Route::post('logout', [AuthController::class, 'logout'])->name('logout')->middleware(['auth.admin']);
 
 Route::prefix('admin')->group(function () {
-    Route::middleware(['auth.admin'])->group(function () {
+    Route::middleware(['admin.only'])->group(function () {
         Route::post('/', action: [AdminController::class, 'createAdmin'])->name('admin.create');
 
         Route::get('dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
@@ -63,7 +63,7 @@ Route::prefix('admin')->group(function () {
 });
 
 Route::prefix('sekretaris')->group(function () {
-    Route::middleware(['auth.admin'])->group(function () {
+    Route::middleware(['sekretaris.only'])->group(function () {
         Route::get('dashboard', [SekretarisController::class, 'dashboard'])->name('sekretaris.dashboard');
         Route::get('users', [SekretarisController::class, 'users'])->name('sekretaris.users');
         Route::get('absensi', [SekretarisController::class, 'absensi'])->name('sekretaris.absensi');

@@ -26,6 +26,21 @@
             <div>
                 <h1 class="text-3xl font-bold text-gray-800">Data Siswa</h1>
                 <p class="text-gray-500 mt-1">Lihat data siswa sistem</p>
+                @if(isset($kelasName) && $kelasName)
+                    <span class="inline-flex items-center px-3 py-1 mt-2 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        Kelas: {{ $kelasName }}
+                    </span>
+                @else
+                    <span class="inline-flex items-center px-3 py-1 mt-2 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        Belum ditugaskan ke kelas
+                    </span>
+                @endif
             </div>
         </div>
 
