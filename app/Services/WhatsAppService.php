@@ -22,7 +22,7 @@ class WhatsAppService
         }
 
         $formattedPhone = $this->formatPhoneNumber($phone);
-        
+
         try {
             $response = Http::timeout(30)
                 ->withHeaders(['Authorization' => $this->token])
@@ -34,9 +34,9 @@ class WhatsAppService
 
             $responseData = $response->json();
             $isSuccess = $response->successful() && ($responseData['status'] ?? false);
-            
+
             if (!$isSuccess) {
-                Log::warning('WhatsApp send failed', [
+                Log::warning('WhatsApp send failed', context: [
                     'phone' => $formattedPhone,
                     'response' => $responseData
                 ]);
@@ -49,13 +49,13 @@ class WhatsAppService
                 'message' => $isSuccess ? 'Pesan berhasil dikirim' : ($responseData['reason'] ?? 'Gagal mengirim pesan'),
                 'response_data' => $responseData
             ];
-            
+
         } catch (\Exception $e) {
             Log::error('WhatsApp send error', [
                 'phone' => $formattedPhone,
                 'error' => $e->getMessage()
             ]);
-            
+
             throw $e;
         }
     }
@@ -69,7 +69,7 @@ class WhatsAppService
             try {
                 $result = $this->sendMessage($phone, $message);
                 $results[] = $result;
-                
+
                 if ($result['success']) {
                     $successCount++;
                 }
@@ -92,15 +92,15 @@ class WhatsAppService
     private function formatPhoneNumber($phone)
     {
         $phone = preg_replace('/[^0-9]/', '', $phone);
-        
+
         if (str_starts_with($phone, '0')) {
             return '62' . substr($phone, 1);
         }
-        
+
         if (!str_starts_with($phone, '62')) {
             return '62' . $phone;
         }
-        
+
         return $phone;
     }
 }
