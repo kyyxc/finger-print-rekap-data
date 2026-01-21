@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->dateTime('record_time')->nullable();
             $table->enum('status', ['masuk', 'hadir', 'telat', 'pulang', 'sakit', 'izin', 'alpha'])->nullable();
+            $table->boolean('is_send')->default(false);
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });

@@ -10,10 +10,12 @@ class Attendance extends Model
         'record_time',
         'status',
         'user_id',
+        'is_send',
     ];
 
     protected $casts = [
         'record_time' => 'datetime',
+        'is_send' => 'boolean',
     ];
 
     public function user()

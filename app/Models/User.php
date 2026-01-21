@@ -24,6 +24,7 @@ class User extends Model
         'nama',
         'photo',
         'kelas',
+        'phone_number',
     ];
 
     /**
