@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\DefaultSchedule;
+use App\Models\Schedule;
 use App\Models\User;
 use Carbon\Carbon;
 use CodingLibs\ZktecoPhp\Libs\ZKTeco;
@@ -200,57 +202,135 @@ class UserController extends Controller
         // ];
         $existingAttendances = Attendance::whereDate('record_time', today())
             ->get(['user_id', 'status'])
-            ->map(fn($att) => $att->user_id . '-' . $att->status)
-            ->flip();
+            ->groupBy('user_id');
         // hasil = [
-        // 'user_id-status' => 0,
-        // 'user_id-status' => 1,
-        // 'user_id-status' => 2,
-        // ];
+        //   user_id => [attendance1, attendance2, ...],
+        //   ...
+        // ]
 
         $attendancesToInsert = [];
+
         foreach ($attendancesFromMachine as $att) {
             $userId = $att['user_id'];
             $timestamp = Carbon::parse($att['record_time']);
-            
+            $dateString = $timestamp->toDateString();
             $role = $rolesMap[$userId] ?? null;
-            
-            if ($role == 14 || (in_array($att['type'], [1, 5]) && $timestamp->hour < 13)) {
+
+            // Skip jika role 14
+            if ($role == 14) {
                 continue;
             }
-                
+
+            // Skip jika user tidak ada di database lokal
             if (!$localUsers->has($userId)) {
                 continue;
             }
 
             $user = $localUsers->get($userId);
 
-            $status = match ($att['type']) {
-                1, 5 => 'pulang',
-                default => $timestamp->format('H:i') > '08:00' ? 'telat' : 'masuk',
-            };
+            // ============================================
+            // CEK APAKAH HARI LIBUR
+            // ============================================
+            // 1. Cek dari Schedule (tanggal merah / libur khusus)
+            $specificSchedule = Schedule::where('date', $dateString)->first();
+            if ($specificSchedule && $specificSchedule->type === 'libur') {
+                continue; // Skip jika tanggal merah
+            }
 
-            $uniqueKey = $user->id . '-' . $status;
-            if (isset($existingAttendances[$uniqueKey])) {
+            // 2. Cek dari DefaultSchedule (libur default seperti Sabtu/Minggu)
+            $dayOfWeek = $timestamp->dayOfWeek; // 0=Minggu, 1=Senin, ..., 6=Sabtu
+            $defaultSchedule = DefaultSchedule::getByDayOfWeek($dayOfWeek);
+            if ($defaultSchedule && $defaultSchedule->is_holiday) {
+                continue; // Skip jika hari libur default
+            }
+
+            // ============================================
+            // AMBIL JAM KERJA DARI SCHEDULE
+            // ============================================
+            $workingHours = Schedule::getWorkingHours($dateString);
+            $jamDatang = $workingHours['jam_datang'] ?? '08:00';
+            $jamPulang = $workingHours['jam_pulang'] ?? '16:00';
+
+            // ============================================
+            // CEK STATUS ATTENDANCE USER HARI INI
+            // ============================================
+            $userAttendances = $existingAttendances->get($user->id, collect());
+            $hasCheckedIn = $userAttendances->whereIn('status', ['masuk', 'telat'])->isNotEmpty();
+            $hasCheckedOut = $userAttendances->where('status', 'pulang')->isNotEmpty();
+
+            // Juga cek dari $attendancesToInsert yang baru ditambahkan
+            $pendingAttendances = collect($attendancesToInsert)->where('user_id', $user->id);
+            $pendingCheckedIn = $pendingAttendances->whereIn('status', ['masuk', 'telat'])->isNotEmpty();
+            $pendingCheckedOut = $pendingAttendances->where('status', 'pulang')->isNotEmpty();
+
+            $hasCheckedIn = $hasCheckedIn || $pendingCheckedIn;
+            $hasCheckedOut = $hasCheckedOut || $pendingCheckedOut;
+
+            // ============================================
+            // TENTUKAN STATUS BERDASARKAN KONDISI
+            // ============================================
+            $currentTime = $timestamp->format('H:i');
+
+            if (!$hasCheckedIn) {
+                // Belum ada absen masuk
+                if ($currentTime >= $jamPulang) {
+                    // Absen pertama kali saat jam pulang -> buat 2 record: telat + pulang
+                    $attendancesToInsert[] = [
+                        'user_id' => $user->id,
+                        'record_time' => $timestamp,
+                        'status' => 'telat',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                    $attendancesToInsert[] = [
+                        'user_id' => $user->id,
+                        'record_time' => $timestamp,
+                        'status' => 'pulang',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                    // Update flag supaya tidak duplikat
+                    $hasCheckedIn = true;
+                    $hasCheckedOut = true;
+                    continue;
+                } elseif ($currentTime > $jamDatang) {
+                    $status = 'telat';
+                } else {
+                    $status = 'masuk';
+                }
+            } elseif ($hasCheckedIn && !$hasCheckedOut) {
+                // Sudah absen masuk, belum absen pulang
+                // Cek apakah sudah waktunya pulang
+                if ($currentTime >= $jamPulang) {
+                    $status = 'pulang';
+                } else {
+                    // Masih sebelum jam pulang, skip (continue)
+                    continue;
+                }
+            } else {
+                // Sudah absen masuk DAN sudah absen pulang, skip
                 continue;
             }
 
+            // ============================================
+            // TAMBAHKAN KE ARRAY INSERT
+            // ============================================
             $attendancesToInsert[] = [
                 'user_id' => $user->id,
                 'record_time' => $timestamp,
                 'status' => $status,
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
-
         }
 
         // Masukkan semua data baru dalam SATU KALI PERINTAH (Bulk Insert)
         if (!empty($attendancesToInsert)) {
             Attendance::insert($attendancesToInsert);
         }
-        // dd(Attendance::all());
 
-        // Opsional tapi sangat disarankan: Hapus data setelah diambil
-        // $zk->clearAttendance();
+        // Hapus data dari mesin setelah diambil
+        $zk->clearAttendance();
         $zk->disconnect();
     }
 }
