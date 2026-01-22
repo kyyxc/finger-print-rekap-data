@@ -23,18 +23,19 @@ class SekretarisController extends Controller
         // Get sekretaris's assigned grade
         $sekretaris = auth()->guard('role')->user()->load('grade');
         $grade = $sekretaris->grade;
+        $gradeId = $grade ? $grade->id : null;
         $kelasName = $grade ? $grade->name : null;
 
         // Statistics
         $today = Carbon::today();
 
-        if ($kelasName) {
+        if ($gradeId) {
             // Total students in the assigned class
-            $totalSiswa = User::where('kelas', $kelasName)->count();
+            $totalSiswa = User::where('grade_id', $gradeId)->count();
 
             // Today's attendance for this class
-            $todayAttendances = Attendance::whereHas('user', function ($q) use ($kelasName) {
-                $q->where('kelas', $kelasName);
+            $todayAttendances = Attendance::whereHas('user', function ($q) use ($gradeId) {
+                $q->where('grade_id', $gradeId);
             })->whereDate('record_time', $today)->get();
 
             $hadirHariIni = $todayAttendances->where('status', 'hadir')->count();
@@ -47,8 +48,8 @@ class SekretarisController extends Controller
             $startOfMonth = Carbon::now()->startOfMonth();
             $endOfMonth = Carbon::now()->endOfMonth();
 
-            $monthlyData = Attendance::whereHas('user', function ($q) use ($kelasName) {
-                $q->where('kelas', $kelasName);
+            $monthlyData = Attendance::whereHas('user', function ($q) use ($gradeId) {
+                $q->where('grade_id', $gradeId);
             })
                 ->whereBetween('record_time', [$startOfMonth, $endOfMonth])
                 ->select(
@@ -109,18 +110,31 @@ class SekretarisController extends Controller
     public function users(Request $request)
     {
         $perPage = $request->get('per_page', 10);
-        
+        $search = $request->get('search');
+
         // Get sekretaris's assigned grade
         $sekretaris = auth()->guard('role')->user()->load('grade');
         $grade = $sekretaris->grade;
+        $gradeId = $grade ? $grade->id : null;
         $kelasName = $grade ? $grade->name : null;
 
-        // Filter users by sekretaris's class only
-        $users = User::when($kelasName, function ($query) use ($kelasName) {
-            return $query->where('kelas', $kelasName);
-        })->orderBy('nama', 'asc')->paginate($perPage);
-        
-        return view('pages.sekretaris.users', compact('users', 'perPage', 'kelasName'));
+        // Filter users by sekretaris's grade_id only
+        $users = User::with('grade')
+            ->when($gradeId, function ($query) use ($gradeId) {
+                return $query->where('grade_id', $gradeId);
+            })
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nis', 'like', "%{$search}%")
+                      ->orWhere('nama', 'like', "%{$search}%")
+                      ->orWhere('phone_number', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('nama', 'asc')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return view('pages.sekretaris.users', compact('users', 'perPage', 'kelasName', 'search'));
     }
 
     public function absensi()
@@ -133,22 +147,24 @@ class SekretarisController extends Controller
         try {
             // Get logged in sekretaris data with grade relationship
             $sekretaris = auth()->guard('role')->user()->load('grade');
-            
+
             // Get kelas from sekretaris grade
             $grade = $sekretaris->grade;
-            
+
             if (!$grade) {
                 return redirect()->route('sekretaris.dashboard')
                     ->with('error', 'Anda belum ditugaskan ke kelas manapun. Silakan hubungi admin.');
             }
-            
+
+            $gradeId = $grade->id;
             $kelasName = $grade->name;
-            
+
             // Get selected date (default today)
             $selectedDate = $request->get('tanggal', now()->toDateString());
-            
-            // Get students data from sekretaris's class
-            $students = User::where('kelas', $kelasName)
+
+            // Get students data from sekretaris's class using grade_id
+            $students = User::with('grade')
+                ->where('grade_id', $gradeId)
                 ->orderBy('nama', 'asc')
                 ->get()
                 ->map(function ($student) use ($selectedDate) {
@@ -156,14 +172,14 @@ class SekretarisController extends Controller
                     $attendance = Attendance::where('user_id', $student->id)
                         ->whereDate('record_time', $selectedDate)
                         ->first();
-                    
+
                     $student->attendance_status = $attendance ? $attendance->status : null;
                     $student->attendance_id = $attendance ? $attendance->id : null;
                     $student->record_time = $attendance ? $attendance->record_time : null;
-                    
+
                     return $student;
                 });
-            
+
             return view('pages.sekretaris.kelola-absen', compact('students', 'kelasName', 'selectedDate'));
         } catch (\Exception $e) {
             \Log::error('Error in kelolaAbsen: ' . $e->getMessage());
