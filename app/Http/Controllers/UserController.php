@@ -339,7 +339,7 @@ class UserController extends Controller
         }
 
         // Hapus data dari mesin setelah diambil
-        $zk->clearAttendance();
+        $zk->clearAttendance(); 
         $zk->disconnect();
     }
 }

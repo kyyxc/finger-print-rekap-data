@@ -20,12 +20,21 @@ class User extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'uid',
         'nis',
         'nama',
         'photo',
-        'kelas',
+        'grade_id',
         'phone_number',
     ];
+
+    /**
+     * Get the grade that the user belongs to.
+     */
+    public function grade()
+    {
+        return $this->belongsTo(Grade::class);
+    }
 
     /**
      * The attributes that should be hidden for serialization.

@@ -69,7 +69,7 @@
 
             {{-- Search Bar & Limit Selector --}}
             <div class="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between flex-shrink-0">
-                <div class="relative w-full sm:max-w-md">
+                <form method="GET" action="{{ route('sekretaris.users') }}" class="relative w-full sm:max-w-md">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                             fill="currentColor">
@@ -78,9 +78,11 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <input type="text" id="searchInput" placeholder="Cari NIS, nama, atau kelas..."
+                    <input type="text" name="search" id="searchInput" placeholder="Cari NIS, nama, atau no telepon..."
+                        value="{{ $search ?? '' }}"
                         class="search-input w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all duration-200">
-                </div>
+                    <input type="hidden" name="per_page" value="{{ $perPage ?? 10 }}">
+                </form>
 
                 {{-- Limit Selector --}}
                 <div class="flex items-center gap-3">
@@ -105,13 +107,14 @@
                             <th class="py-4 px-6 text-left text-xs font-bold text-gray-600 uppercase tracking-wider bg-gray-100">NIS</th>
                             <th class="py-4 px-6 text-left text-xs font-bold text-gray-600 uppercase tracking-wider bg-gray-100">Nama</th>
                             <th class="py-4 px-6 text-left text-xs font-bold text-gray-600 uppercase tracking-wider bg-gray-100">Kelas</th>
+                            <th class="py-4 px-6 text-left text-xs font-bold text-gray-600 uppercase tracking-wider bg-gray-100">No. Telepon Ortu</th>
                             <th class="py-4 px-6 text-left text-xs font-bold text-gray-600 uppercase tracking-wider bg-gray-100">Photo</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($users as $index => $user)
                             <tr class="table-row-hover bg-white hover:bg-emerald-50/50 transition-all duration-200"
-                                data-search="{{ strtolower($user->nis . ' ' . $user->nama . ' ' . ($user->kelas ?? '')) }}">
+                                data-search="{{ strtolower($user->nis . ' ' . $user->nama . ' ' . ($user->grade->name ?? '') . ' ' . ($user->phone_number ?? '')) }}">
                                 <td class="py-4 px-6 text-sm text-gray-700 row-number">{{ $users->firstItem() + $index }}</td>
                                 <td class="py-4 px-6">
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
@@ -123,8 +126,11 @@
                                 </td>
                                 <td class="py-4 px-6">
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-                                        {{ $user->kelas ?? '-' }}
+                                        {{ $user->grade->name ?? '-' }}
                                     </span>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="text-sm text-gray-700">{{ $user->phone_number ?? '-' }}</span>
                                 </td>
                                 <td class="py-4 px-6">
                                     @if ($user->photo)
@@ -142,7 +148,7 @@
                             </tr>
                         @empty
                             <tr id="emptyDataRow">
-                                <td colspan="5" class="py-12 sm:py-16 px-4 sm:px-6 text-center">
+                                <td colspan="6" class="py-12 sm:py-16 px-4 sm:px-6 text-center">
                                     <div class="flex flex-col items-center gap-2 sm:gap-3">
                                         <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-50 flex items-center justify-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 sm:h-8 sm:w-8 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -156,7 +162,7 @@
                         @endforelse
                         {{-- Hidden row for no search results --}}
                         <tr id="noSearchResultsRow" class="hidden">
-                            <td colspan="5" class="py-12 sm:py-16 px-4 sm:px-6 text-center">
+                            <td colspan="6" class="py-12 sm:py-16 px-4 sm:px-6 text-center">
                                 <div class="flex flex-col items-center gap-2 sm:gap-3">
                                     <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-50 flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 sm:h-8 sm:w-8 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -261,44 +267,20 @@
             window.location.href = url.toString();
         }
 
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#usersTable tbody tr[data-search]');
-            const noSearchResultsRow = document.getElementById('noSearchResultsRow');
-            const emptyDataRow = document.getElementById('emptyDataRow');
-            let visibleIndex = 1;
-            let visibleCount = 0;
-
-            rows.forEach(row => {
-                const searchData = row.getAttribute('data-search');
-                if (searchData.includes(searchTerm)) {
-                    row.style.display = '';
-                    // Update row number for visible rows
-                    const numberCell = row.querySelector('.row-number');
-                    if (numberCell) {
-                        numberCell.textContent = visibleIndex;
-                    }
-                    visibleIndex++;
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-
-            // Show/hide no results message
-            if (noSearchResultsRow) {
-                if (visibleCount === 0 && rows.length > 0) {
-                    noSearchResultsRow.classList.remove('hidden');
-                } else {
-                    noSearchResultsRow.classList.add('hidden');
-                }
+        // Server-side search with debounce
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('keyup', function(e) {
+            // Submit on Enter key
+            if (e.key === 'Enter') {
+                this.closest('form').submit();
+                return;
             }
 
-            // Hide empty data row when searching
-            if (emptyDataRow && rows.length > 0) {
-                emptyDataRow.style.display = 'none';
-            }
+            // Debounce auto-submit (wait 500ms after typing stops)
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.closest('form').submit();
+            }, 500);
         });
     </script>
 @endpush

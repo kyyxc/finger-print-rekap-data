@@ -243,14 +243,26 @@ class AdminController extends Controller
         }
 
         $perPage = $request->get('per_page', 10);
+        $search = $request->get('search');
         $grades = Grade::orderBy('name', 'asc')->get();
 
         $users = User::query()
+            ->with('grade')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nis', 'like', "%{$search}%")
+                      ->orWhere('nama', 'like', "%{$search}%")
+                      ->orWhere('phone_number', 'like', "%{$search}%")
+                      ->orWhereHas('grade', function ($gradeQuery) use ($search) {
+                          $gradeQuery->where('name', 'like', "%{$search}%");
+                      });
+                });
+            })
             ->orderBy('nama', 'asc')
             ->paginate($perPage)
             ->withQueryString();
 
-        return view('pages.admins.users', compact('users', 'grades', 'perPage'));
+        return view('pages.admins.users', compact('users', 'grades', 'perPage', 'search'));
     }
 
     /**
@@ -263,12 +275,15 @@ class AdminController extends Controller
         $request->validate([
             'nis' => 'required|string|max:50|unique:users,nis,' . $id,
             'nama' => 'required|string|max:255',
-            'kelas' => 'nullable|string|max:100',
+            'grade_id' => 'nullable|exists:grades,id',
+            'phone_number' => 'nullable|string|max:20',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ], [
             'nis.required' => 'NIS wajib diisi.',
             'nis.unique' => 'NIS sudah digunakan.',
             'nama.required' => 'Nama wajib diisi.',
+            'grade_id.exists' => 'Kelas tidak valid.',
+            'phone_number.max' => 'Nomor telepon maksimal 20 karakter.',
             'photo.image' => 'File harus berupa gambar.',
             'photo.mimes' => 'Format gambar harus jpeg, png, atau jpg.',
             'photo.max' => 'Ukuran gambar maksimal 5MB.',
@@ -276,7 +291,8 @@ class AdminController extends Controller
 
         $user->nis = $request->nis;
         $user->nama = $request->nama;
-        $user->kelas = $request->kelas;
+        $user->grade_id = $request->grade_id;
+        $user->phone_number = $request->phone_number;
 
         // Handle photo upload
         if ($request->hasFile('photo')) {
@@ -330,12 +346,13 @@ class AdminController extends Controller
 
         try {
             Excel::import(new UserImport, $request->file('excel_file'));
+
         } catch (\Exception $e) {
             Log::error('Gagal sinkronisasi user: ' . $e->getMessage());
             return redirect()->back()->withErrors(['excel_file' => $e->getMessage()]);
         }
 
-        return redirect()->back()->with('message', '✅ Data pengguna berhasil diimpor!');
+        return redirect()->back()->with('message', 'Data pengguna berhasil diimpor!');
     }
 
     public function importPhotos(Request $request)
