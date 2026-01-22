@@ -23,7 +23,7 @@ class GradeSeeder extends Seeder
             'XI PPLG 2',
             'XII PPLG 1',
             'XII PPLG 2',
-            
+
             // TJKT (Teknik Jaringan Komputer dan Telekomunikasi)
             'X TJKT 1',
             'X TJKT 2',
@@ -35,11 +35,11 @@ class GradeSeeder extends Seeder
 
         foreach ($grades as $gradeName) {
             // Generate Indonesian phone number format (08xx-xxxx-xxxx)
-            $phoneNo = '08' . $faker->numberBetween(11, 99) . $faker->numerify('########');
-            
+            // $phoneNo = '08' . $faker->numberBetween(11, 99) . $faker->numerify('########');
+
             Grade::firstOrCreate(
                 ['name' => $gradeName],
-                ['phone_no' => $phoneNo]
+                ['phone_no' => '081958749289']
             );
         }
 

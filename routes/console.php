@@ -13,3 +13,6 @@ Schedule::command('app:sync-attendance')->everyMinute();
 
 // Jalankan notifikasi WhatsApp setiap 10 menit
 Schedule::command('app:run-send-whatsapp-job')->everyMinute();
+
+// Kirim ringkasan kehadiran harian ke wali kelas setiap jam 8 pagi
+Schedule::command('app:send-daily-attendance-summary')->dailyAt('08:00');
