@@ -25,6 +25,7 @@ class SekretarisController extends Controller
         $grade = $sekretaris->grade;
         $gradeId = $grade ? $grade->id : null;
         $kelasName = $grade ? $grade->name : null;
+        $kelasPhoneNo = $grade ? $grade->phone_no : null;
 
         // Statistics
         $today = Carbon::today();
@@ -93,6 +94,7 @@ class SekretarisController extends Controller
 
         return view('pages.sekretaris.dashboard', compact(
             'kelasName',
+            'kelasPhoneNo',
             'totalSiswa',
             'hadirHariIni',
             'sakitHariIni',

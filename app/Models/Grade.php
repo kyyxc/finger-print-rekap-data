@@ -13,7 +13,7 @@ class Grade extends Model
      */
     public function users()
     {
-        return $this->hasMany(User::class, 'kelas', 'name');
+        return $this->hasMany(User::class, 'grade_id', 'id');
     }
 
     /**
