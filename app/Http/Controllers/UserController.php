@@ -52,7 +52,7 @@ class UserController extends Controller
         // Base query attendance
         // ==============================
         $query = Attendance::query()
-            ->with('user')
+            ->with('user.grade')
             ->whereHas('user', fn($q) => $q->whereNull('deleted_at'));
 
         // ==============================
@@ -111,7 +111,7 @@ class UserController extends Controller
 
             $singleDate = $request->input('tanggal_tunggal', now()->toDateString());
 
-            $allUsers = User::whereNull('deleted_at')->get();
+            $allUsers = User::with('grade')->whereNull('deleted_at')->get();
             $presentUserIds = $results->pluck('user_id')->unique();
 
             $absentAttendances = $allUsers
@@ -339,7 +339,7 @@ class UserController extends Controller
         }
 
         // Hapus data dari mesin setelah diambil
-        $zk->clearAttendance(); 
+        $zk->clearAttendance();
         $zk->disconnect();
     }
 }
