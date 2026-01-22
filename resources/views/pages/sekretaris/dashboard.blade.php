@@ -13,6 +13,12 @@
                     <span class="material-icons text-sm mr-1">school</span>
                     Kelas: {{ $kelasName }}
                 </span>
+                @if($kelasPhoneNo)
+                <span class="inline-flex items-center px-3 py-1 mt-2 ml-2 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    <span class="material-icons text-sm mr-1">phone</span>
+                    {{ $kelasPhoneNo }}
+                </span>
+                @endif
             @else
                 <span class="inline-flex items-center px-3 py-1 mt-2 rounded-full text-sm font-medium bg-red-100 text-red-800">
                     <span class="material-icons text-sm mr-1">warning</span>
